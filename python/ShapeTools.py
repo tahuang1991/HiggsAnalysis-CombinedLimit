@@ -21,6 +21,7 @@ class ShapeBuilder(ModelBuilder):
         if options.libs:
             for lib in options.libs:
                 ROOT.gSystem.Load(lib)
+	self.options.verbose = 0
     	self.wspnames = {}
     	self.wsp = None
     	self.extraImports = []
@@ -261,12 +262,15 @@ class ShapeBuilder(ModelBuilder):
         shapeTypes = []; shapeBins = []; shapeObs = {}
         self.pdfModes = {}
         for ib,b in enumerate(self.DC.bins):
+	    print "ib ",ib, " b ",b
             databins = {}; bgbins = {}
             channelBinParFlag = b in self.DC.binParFlags.keys()
             for p in [self.options.dataname]+self.DC.exp[b].keys():
+		print "p ", p
                 if len(self.DC.obs) == 0 and p == self.options.dataname: continue
                 if p != self.options.dataname and self.DC.exp[b][p] == 0: continue
                 shape = self.getShape(b,p); norm = 0;
+		print "shape ",shape
                 if shape == None: # counting experiment
                     if not self.out.var("CMS_fakeObs"): 
                         self.doVar("CMS_fakeObs[0,1]");
@@ -295,6 +299,7 @@ class ShapeBuilder(ModelBuilder):
                         for i in xrange(1, shape.GetNbinsX()+1):
                             if shape.GetBinContent(i) > 0: bgbins[i] = True
                 elif shape.InheritsFrom("RooDataHist"):
+		    print "shape from RooDatahist  "
                     shapeTypes.append("RooDataHist"); 
                     shapeBins.append(shape.numEntries())
                     shapeObs[self.argSetToString(shape.get())] = shape.get()
@@ -306,6 +311,7 @@ class ShapeBuilder(ModelBuilder):
                             self.pdfModes[b] = 'binned'
                 elif shape.InheritsFrom("RooDataSet"):
                     shapeTypes.append("RooDataSet"); 
+		    print "shape from RooDataSet  "
                     shapeObs[self.argSetToString(shape.get())] = shape.get()
                     norm = shape.sumEntries()
                     if p == self.options.dataname: self.pdfModes[b] = 'unbinned'
@@ -313,6 +319,7 @@ class ShapeBuilder(ModelBuilder):
                     shapeTypes.append("TTree"); 
                     if p == self.options.dataname: self.pdfModes[b] = 'unbinned'
                 elif shape.InheritsFrom("RooAbsPdf"):
+		    print "shape from RooAbsPdf  "
                     shapeTypes.append("RooAbsPdf");
                 elif shape.InheritsFrom("CMSHistFunc"):
                     shapeTypes.append("CMSHistFunc");
@@ -326,6 +333,7 @@ class ShapeBuilder(ModelBuilder):
                             elif self.DC.obs[b] >0 and abs(norm/self.DC.obs[b]-1) > 0.005:
                                 if not self.options.noCheckNorm: raise RuntimeError, "Mismatch in normalizations for observed data in bin %s: text %f, shape %f" % (b,self.DC.obs[b],norm)
                     else:
+			print "expected ",self.DC.exp[b][p], " norm ",norm
                         if self.DC.exp[b][p] == -1: self.DC.exp[b][p] = norm
                         elif self.DC.exp[b][p] > 0 and abs(norm-self.DC.exp[b][p]) > 0.01*max(1,self.DC.exp[b][p]): 
                             if not self.options.noCheckNorm: raise RuntimeError, "Mismatch in normalizations for bin %s, process %s: rate %f, shape %f" % (b,p,self.DC.exp[b][p],norm)
@@ -581,6 +589,7 @@ class ShapeBuilder(ModelBuilder):
                         rhp.setActiveBins(maxbins)
 
                 else:
+		    print "getPDF channel ",channel, " process ", process, " self.out.binVar ",self.out.binVar," rebins ",rebins, " coeffs ",coeffs
                     rhp = ROOT.FastVerticalInterpHistPdf2("shape%s_%s_%s_morph" % (postFix,channel,process), "", self.out.binVar, rebins, coeffs, qrange, qalgo)
                     if self.options.optimizeTemplateBins and maxbins < self.out.maxbins:
                         #print "Optimizing binning: %d -> %d for %s " % (self.out.maxbins, maxbins, rhp.GetName())
@@ -596,7 +605,14 @@ class ShapeBuilder(ModelBuilder):
                     pdfs.Add(self.shape2Pdf(shapeDown,channel,process))
                 histpdf =  nominalPdf if nominalPdf.InheritsFrom("RooDataHist") else nominalPdf.dataHist()
                 xvar = histpdf.get().first()
-                rhp = ROOT.FastVerticalInterpHistPdf2("shape%s_%s_%s_morph" % (postFix,channel,process), "", xvar, pdfs, coeffs, qrange, qalgo)
+		print "getPDF channel ",channel, " process ", process, " from  RooHistPdf ", " xvar ",xvar," total var ",  histpdf.get()
+		###Tao 
+                #rhp = ROOT.FastVerticalInterpHistPdf2("shape%s_%s_%s_morph" % (postFix,channel,process), "", xvar, pdfs, coeffs, qrange, qalgo)
+		yvar = histpdf.get().find("HME")
+                ##rhp = ROOT.FastVerticalInterpHistPdf2D2("shape%s_%s_%s_morph" % (postFix,channel,process), "",  xvar, yvar, True, pdfs, coeffs, qrange, qalgo)
+                rhp = ROOT.FastVerticalInterpHistPdf2D2("shape%s_%s_%s_morph" % (postFix,channel,process), "",  xvar, yvar, False, pdfs, coeffs, qrange, qalgo)
+
+
                 _cache[(channel,process)] = rhp
                 return rhp
             else:
@@ -773,6 +789,7 @@ class ShapeBuilder(ModelBuilder):
             names.append(arg.GetName())
         return ",".join(names)
     def optimizeExistingTemplates(self,pdf):
+	print "optimizeExistingTemplates  pdf ",pdf.GetName()
         if pdf.ClassName() == "FastVerticalInterpHistPdf2D":
             return ROOT.FastVerticalInterpHistPdf2D2(pdf, "%s_opt" % pdf.GetName())
         elif pdf.ClassName() == "RooProdPdf" and pdf.pdfList().getSize() == 2:
