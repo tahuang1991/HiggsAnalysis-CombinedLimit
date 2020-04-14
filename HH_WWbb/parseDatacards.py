@@ -448,6 +448,7 @@ def parseDatacards_NNcut1D(inputdir, nnout, outdir_prefix):
     masslist = [260, 270, 300, 350, 400, 450, 500, 550, 600, 650, 750, 800, 900]
     NNout = "DNN";
     NNcutlist = [0.0, 0.04,  0.12,  0.20,  0.28, 0.36, 0.40,  0.48,  0.56, 0.60,  0.72]
+    NNcutlist = [0.04]
     #nnout = "nnout_MTonly"
     for nncut in NNcutlist:
 	nncutsuffix = "nnstep0p04_nncut0p%s"%(str(nncut)[2:])
@@ -465,10 +466,11 @@ def parseDatacards_NNcut1D(inputdir, nnout, outdir_prefix):
 def parseDatacards_NNcut2D(inputdir, nnout, outdir_prefix):
     masslist = [260, 270, 300, 350, 400, 450, 500, 550, 600, 650, 750, 800, 900]
     NNout = "DNN";
-    NNcutlist = [ 0.04,  0.12,  0.20,  0.28, 0.36, 0.40,  0.48,  0.56, 0.60,  0.72]
-    NNcutlist = [0.28, 0.36, 0.48,  0.56, 0.60,  0.72]
-    NNcutlist = [0.40]
-    HMEout = "HME"; HMEMin = 250; HMEMax=1200
+    NNcutlist = [0.0, 0.04,  0.12,  0.20,  0.28, 0.36, 0.40,  0.48,  0.56, 0.60,  0.72]
+    NNcutlist = [0.0, 0.04,  0.20,  0.28, 0.36, 0.40,  0.48,  0.56, 0.60,  0.72]
+    #NNcutlist = [0.28, 0.36, 0.48,  0.56, 0.60,  0.72]
+    #NNcutlist = [0.12]
+    HMEout = "HME"; HMEMin = 250.0; HMEMax=1200.0
     #nnout = "nnout_MTonly"
     for nncut in NNcutlist:
 	nncutsuffix = "nnstep0p04_nncut0p%s"%(str(nncut)[2:])
@@ -501,7 +503,7 @@ nnout = "nnout_MTonly"
 #parseDatacards_NNcut1D(inputdir, "nnout_MTandMT2_MJJ", prefix_out)
 inputdir = "HHbbWW_20200401_NNoutput_MjjCR_NNcutstudy2D/"
 #parseDatacards_NNcut2D(inputdir, nnout, prefix_out)
-parseDatacards_NNcut2D(inputdir, "nnout_MTandMT2", prefix_out)
+#parseDatacards_NNcut2D(inputdir, "nnout_MTandMT2", prefix_out)
 parseDatacards_NNcut2D(inputdir, "nnout_MTandMT2_MJJ", prefix_out)
 #masslist = [260, 270, 400, 750, 900]
 #masslist = [400]
@@ -515,114 +517,3 @@ plotname = os.path.join(outdir, "Radion")
 #modellist = ["MTonly","MTandMT2", "MTandMT2_MJJ"]
 modellist = ["MTonly","MTandMT2"]
 #modellist = ["MTonly"]
-def getlimits_masspoint():
-  gnames = []
-  flist = []
-  modelcombined = ""
-
-  #analysistype = "cutandcount"
-  analysistype = "shape_ws"
-
-  for model in modellist:
-    #suffix = 'Radion_2D_HME_NN_{model}_xsec1pb_{anatype}_tminus1_autoMCStats'.format(model = model, anatype = analysistype)
-    #suffix = 'Radion_1D_HMEShape_{model}_xsec1pb_{anatype}_tminus1_autoMCStats'.format(model = model, anatype = analysistype)
-    #output_suffix = '{:%Y-%m-%d}_{}'.format(datetime.date.today(), suffix)
-    #output_suffix = "2018-03-08_%s"%suffix
-    #rootfile = "Hhh_FinalBGYield_xsec1pb_NN_nnout_{model}.root".format(model = model)
-    #rootfile = "Hhh_FinalBGYield_xsec1pb_HMENNcut_nnout_{model}_2018-02-07.root".format(model = model)
-    cwd = os.getcwd()
-    datacarddir = os.path.join(cwd, "%s_HME_2D_xsec1fb_20180312_2D_NNbin10_nncut035"%("MTandMT2"))
-    #rootfile = os.path.join(datacarddir, "Hhh_FinalBGYield_2Dlimits_2018-03-13_nnout_%s.root"%model)
-    rootdir = datacarddir
-    print "rootfile ",rootdir
-    
-    #outdir = os.path.join(datacarddir, output_suffix)
-    outdir = os.path.join(cwd, "%s_HME_2D_xsec1fb_20180312_2D_NNbin10_nncut035_doublesyserr"%("MTandMT2"))
-
-    #os.system("mkdir -p "+outdir)
-    #if model != "MTonly":
-    alldatacards(rootdir, model, masslist, False, outdir, analysistype)
-    cardnameprefix = os.path.join(outdir, analysistype)
-    print "cardnameprefix ",cardnameprefix
-
-    plotname = os.path.join(outdir, "Radion_"+model+"_"+analysistype)
-    #for mass in masslist:
-    #for mass in [260, 500, 900]:
-    #    GetNLimits(cardnameprefix, mass, 20, method, model+" M=%dGeV"%mass, plotname+"_M%d"%mass)
-    
-    #if model != "MTonly":
-    Limitplots(cardnameprefix, masslist, method, model, plotname)
-    flist.append(plotname + ".root")
-    gnames.append("Radion_"+model+"_"+analysistype)
-    modelcombined = modelcombined+model+"_"
-
-  if len(modellist)>1:
-
-      output_suffix = '{:%Y-%m-%d}_{}'.format(datetime.date.today(), modelcombined[:-1])
-      outdir = os.path.join(datacarddir, output_suffix)
-      os.system("mkdir -p "+outdir)
-      #plotname = os.path.join(outdir, "Radion_"+modelcombined+analysistype)
-      plotname = os.path.join(outdir, "Radion_"+modelcombined+"HME"+analysistype)
-      legs = modellist
-      if legs[-1] == "MTandMT2_MJJ":
-          legs[-1] =  "MT,MT2andMJJ"
-      CombineLimitplots(flist, gnames, masslist, "radion mass [GeV]", legs, " ", plotname)
-
-#runImpacts("2018-02-07_Radion_1D_NN_MTonly_xsec1pb_AddObservation/shape", [270, 350, 450, 550, 600, 650, 750, 800], "runimpacts.log")
-#getlimits_masspoint()
-flist = []; gnames = [] ; legs = []
-#flist = ["Radion_MuMu_ElEl_MuEl_CMSHIG17006.root","2018-02-07_Radion_1D_NN_MTonly_xsec1pb_tminus1/Radion_MTonly_NN.root","MTandMT2_HME_2D_xsec1fb_20180312_2D_NNbin10_nncut035/Radion_MTonly_shape_ws.root", "MTandMT2_HME_2D_xsec1fb_20180312_2D_NNbin10_nncut035_doublesyserr/Radion_MTonly_shape_ws.root"]
-#gnames = ["Radion_MuMu_ElEl_MuEl","Radion_MTonly_NN", "Radion_MTonly_shape_ws","Radion_MTonly_shape_ws"]
-#legs = ["HIG17006, Expected","DNN output shape","DNN output Vs HME(2D)","DNN output Vs HME(2D), double Sys."]
-#plotname = "2018-03-09_MTonly_MTandMT2_MTandMT2_MJJ_2D/Radion_NNshape_HMEshape_NNVsHME2D_nodata_noHMEshape_doublesyserr"
-flist= ["CMS_HIG_17_006/Radion_allchannels.root","GGToX0ToHHTo2B2L2Nu_limits/Radion_allchannels.root"]
-legs = ["HIG17006","My result"]
-for channel in ["MuMu","ElEl","MuEl"]:
-    plotname = "2018-07-05_HIG17006_Tao_%s"%channel
-    gnames = ["Radion_%s_S1_central"%channel, "Radion_ElEl_%s_central"%channel]
-    #CombineLimitplots(flist, gnames, masslist, "radion mass [GeV]", legs, " ", plotname)
-
-#
-#for nncut in ["03","035","04","045","05"]:
-#    
-#    cwd = os.getcwd()
-#    datacarddir = os.path.join(cwd, "%s_HME_2D_xsec1fb_20180312_2D_NNbin10_nncut%s"%("MTandMT2", nncut))
-#    if nncut == "05":
-#        datacarddir = os.path.join(cwd, "%s_HME_2D_xsec1fb_20180312_2D_NNbin10_nncut%s_v2"%("MTandMT2", nncut))
-#    filename =  os.path.join(datacarddir, "Radion_MTonly_shape_ws.root")
-#    flist.append( filename )
-#    legs.append("DNN output >= 0.%s"%(nncut[1:]))
-#    gnames.append("Radion_MTonly_shape_ws")
-#
-#plotname = "2018-03-13_MTonly_MTandMT2_MTandMT2_MJJ_2D_allNNcuts/Radion_NNshape_HMEshape_MTonly_NNcuts03_055"
-#CombineLimitplots(flist, gnames, masslist, "radion mass [GeV]", legs, " ", plotname)
-        
-#CombineLimitplots(flist[1:], gnames[1:], masslist, "radion mass [GeV]", legs[1:], " ", plotname)
-
-
-"""
-def getlimits_WP():
-  for model in modellist:
-  #for mass in [260, 300, 350, 400, 500, 600, 750, 900]:
-  #for mass in [300, 500, 900]:
-   for mass in masslist:
-    #suffix = 'Radion_1D_{model}_xsec1pb_M{mass}'.format(model = model, mass = mass)
-    #Hhh_FinalBGYield_xsec1pb_NN_nnout_MTandMT2
-    #rootfile = "Hhh_FinalBGYield_HME_nnout_{model}_HMETest_20180201.root".format(model = model)
-    rootfile = "Hhh_FinalBGYield_xsec1pb_HMENNcut_nnout_{model}_2018-02-07.root".format(model = model)
-    suffix = 'Radion_1D_HMEshape_{model}_xsec1pb_{anatype}_tminus1'.format(model = model, anatype = analysistype)
-    output_suffix = '{:%Y-%m-%d}_{}'.format(datetime.date.today(), suffix)
-    outdir = os.path.join(datacarddir, output_suffix)
-    os.system("mkdir -p "+outdir)
-    alldatacards_HME(rootfile, [mass], False, outdir, "shape")
-    cardnameprefix = os.path.join(outdir, "shape")
-
-    text = model+" M=%d"%mass
-    plotname = os.path.join(outdir, "Radion_"+model+"_M%d"%(mass))
-    xpoints = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-    Limitplots_HME(cardnameprefix, xpoints, mass,  method, text, plotname)
-
-
-#getlimits_WP()
-
-"""

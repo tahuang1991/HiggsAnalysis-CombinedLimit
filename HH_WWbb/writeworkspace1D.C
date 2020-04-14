@@ -21,6 +21,9 @@ data_obs->plotOn(nnframe)
 nnframe->Draw()
  */
 
+
+// Signal: assume input signal cross section is 5pb, rescale it into 1fb by 1e-3/5.0
+
 static const unsigned int NProcess = 9;
 static const unsigned int NSystematic = 9;
 const TObjString processes[ NProcess ] = {"TTbar","SingleTop","Drell_Yan","data_untagged","TTbar_untagged","SingleTop_untagged", "ttV","VV","Signal"};

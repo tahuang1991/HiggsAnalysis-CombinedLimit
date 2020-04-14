@@ -400,11 +400,11 @@ class ShapeBuilder(ModelBuilder):
             if not self.wsp: raise RuntimeError, "Failed to find %s in file %s (from pattern %s, %s)" % (wname,finalNames[0],names[1],names[0])
             if self.wsp.ClassName() == "RooWorkspace":
                 ret = self.wsp.data(oname)
-                print oname, " is  a data in workspace"
+                #print oname, " is  a data in workspace" ## Tao
                 if not ret: ret = self.wsp.pdf(oname)
-                print oname, " is  a pdf in workspace"
+                #print oname, " is  a pdf in workspace" ##Tao
                 if not ret: ret = self.wsp.function(oname)
-                print oname, " is  a function in workspace"
+                #print oname, " is  a function in workspace"   ##Tao
                 if not ret:
                     if allowNoSyst: return None
                     raise RuntimeError, "Object %s in workspace %s in file %s does not exist or it's neither a data nor a pdf" % (oname, wname, finalNames[0])

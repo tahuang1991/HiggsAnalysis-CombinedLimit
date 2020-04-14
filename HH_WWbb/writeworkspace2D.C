@@ -21,6 +21,10 @@ data_obs->plotOn(nnframe)
 nnframe->Draw()
  */
 
+
+
+// Signal: assume input signal cross section is 5pb, rescale it into 1fb by 1e-3/5.0
+
 static const unsigned int NProcess = 9;
 static const unsigned int NSystematic = 9;
 const TObjString processes[ NProcess ] = {"TTbar","SingleTop","Drell_Yan","data_untagged","TTbar_untagged","SingleTop_untagged", "ttV","VV","Signal"};
@@ -63,7 +67,7 @@ void writeworkspace2D(int mass, char* channel, char* variable, float xmin, float
     cout << "data_obs_histname "<< data_obs_histname << endl;
     TH2F * hist_data = (TH2F*)  gDirectory->Get(data_obs_histname );
     RooDataHist hist_data_Roodata ("data_obs", "data_obs", RooArgList(NN, HME), hist_data);
-    //RooHistPdf hist_data_pdf ("data_obs", "data_obs", RooArgList(NN, HME), hist_data_Roodata);
+    RooHistPdf hist_data_pdf ("data_obs", "data_obs", RooArgList(NN, HME), hist_data_Roodata);
 
     w->import(hist_data_Roodata);
     //w->import(hist_data_pdf);
@@ -86,10 +90,10 @@ void writeworkspace2D(int mass, char* channel, char* variable, float xmin, float
             hist_nominal->Scale(1e-3/5.0);
         //RooDataHist hist_nominal_Roodata (processes[i].GetString()+"_Roodata", processes[i].GetString()+"_Roodata", RooArgList(NN), hist_nominal);
         RooDataHist hist_nominal_Roodata (processes[i].GetString(), processes[i].GetString()+"_Roodata", RooArgList(NN, HME), hist_nominal);
-        //RooHistPdf hist_nominal_pdf (processes[i].GetString(), processes[i].GetString(), RooArgList(NN), hist_nominal_Roodata);
+        RooHistPdf hist_nominal_pdf (processes[i].GetString(), processes[i].GetString(), RooArgList(NN, HME), hist_nominal_Roodata);
 
         w->import(hist_nominal_Roodata);
-        //w->import(hist_nominal_pdf);
+       // w->import(hist_nominal_pdf);
         if (processes[i].GetString().Contains("data"))
             continue;
 
@@ -119,10 +123,10 @@ void writeworkspace2D(int mass, char* channel, char* variable, float xmin, float
             }
 
             RooDataHist hist_up_Roodata ( hist_sys_name + "Up", processes[i].GetString()+"_"+ systematics[j].GetString()+"_up_Roodata", RooArgList(NN, HME), hist_up);
-            //RooHistPdf hist_up_pdf (processes[i].GetString()+"_"+ systematics[j].GetString()+"Up", processes[i].GetString()+"_"+ systematics[j].GetString()+"_up", RooArgList(NN, HME), hist_up_Roodata);
+            RooHistPdf hist_up_pdf (processes[i].GetString()+"_"+ systematics[j].GetString()+"Up", processes[i].GetString()+"_"+ systematics[j].GetString()+"_up", RooArgList(NN, HME), hist_up_Roodata);
             //RooDataHist hist_down_Roodata (processes[i].GetString()+"_"+ systematics[j].GetString()+"_down_Roodata", processes[i].GetString()+"_"+ systematics[j].GetString()+"_down_Roodata", RooArgList(NN, HME), hist_down);
             RooDataHist hist_down_Roodata (hist_sys_name +"Down", processes[i].GetString()+"_"+ systematics[j].GetString()+"_down_Roodata", RooArgList(NN, HME), hist_down);
-            //RooHistPdf hist_down_pdf (processes[i].GetString()+"_"+ systematics[j].GetString()+"Down", processes[i].GetString()+"_"+ systematics[j].GetString()+"_down", RooArgList(NN, HME), hist_down_Roodata);
+            RooHistPdf hist_down_pdf (processes[i].GetString()+"_"+ systematics[j].GetString()+"Down", processes[i].GetString()+"_"+ systematics[j].GetString()+"_down", RooArgList(NN, HME), hist_down_Roodata);
             w->import(hist_up_Roodata);
             //w->import(hist_up_pdf);
             w->import(hist_down_Roodata);
