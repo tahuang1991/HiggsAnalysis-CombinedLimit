@@ -31,6 +31,8 @@ def writeintoworkspace_2D(masslist, filesuffix, variable, xmin, xmax, yvariable,
     #xmin = 0.12; xmax = 2.76
     #yvariable = "HME"
     #ymin = 250; ymax = 1200
+    rootws_fname = "root2ws_%s_2D.sh"%filesuffix
+    rootws = open(rootws_fname,"write")
     for mass in masslist:
         outdir_mass = os.path.join(outdir, "M%d"%mass)
         infile = os.path.join(inputdir, "%s_SignalM%d.root"%(filesuffix, mass))
@@ -39,9 +41,12 @@ def writeintoworkspace_2D(masslist, filesuffix, variable, xmin, xmax, yvariable,
         for channel in channels:
             outfile = os.path.join(outdir_mass, prefix_out+"_M%d_%s_shapes.root"%(mass, channel))
             command = 'root -b -q "writeworkspace2D.C(%d, \\"%s\\", \\"%s\\", %f, %f, \\"%s\\", %f, %f,  \\"%s\\", \\"%s\\")"'%(mass, channel, variable, xmin, xmax, yvariable, ymin, ymax,  infile, outfile)
-            print "writeintoworkspace command ",command
-            os.system(command)
+            #print "writeintoworkspace command ",command
+            #os.system(command)
+	    rootws.write(command+"\n")
         ### example
+    os.system("chmod 775 "+rootws_fname)
+    #os.system("source "+rootws_fname)
 
 
 
@@ -467,9 +472,8 @@ def parseDatacards_NNcut2D(inputdir, nnout, outdir_prefix):
     masslist = [260, 270, 300, 350, 400, 450, 500, 550, 600, 650, 750, 800, 900]
     NNout = "DNN";
     NNcutlist = [0.0, 0.04,  0.12,  0.20,  0.28, 0.36, 0.40,  0.48,  0.56, 0.60,  0.72]
-    NNcutlist = [0.0, 0.04,  0.20,  0.28, 0.36, 0.40,  0.48,  0.56, 0.60,  0.72]
-    #NNcutlist = [0.28, 0.36, 0.48,  0.56, 0.60,  0.72]
-    #NNcutlist = [0.12]
+    #NNcutlist = [ 0.48,  0.56, 0.60,  0.72]
+
     HMEout = "HME"; HMEMin = 250.0; HMEMax=1200.0
     #nnout = "nnout_MTonly"
     for nncut in NNcutlist:
@@ -483,7 +487,7 @@ def parseDatacards_NNcut2D(inputdir, nnout, outdir_prefix):
 	#writeintoworkspace_1D(masslist, filesuffix, NNout, NNoutMin, NNoutMax, inputdir, prefix_out, outdir)
 
 	writeintoworkspace_2D(masslist,filesuffix, NNout, NNoutMin, NNoutMax, HMEout, HMEMin, HMEMax, inputdir, prefix_out, outdir)
-	generatedatacard(outdir, masslist, prefix_out, True)
+	#generatedatacard(outdir, masslist, prefix_out, True)
 
 prefix_out = "GGToX0ToHHTo2B2L2Nu"
 suffix = 'Radion_1D_nnoutMTandMJJ_xsec1pb'
@@ -502,8 +506,8 @@ nnout = "nnout_MTonly"
 #parseDatacards_NNcut1D(inputdir, "nnout_MTandMT2", prefix_out)
 #parseDatacards_NNcut1D(inputdir, "nnout_MTandMT2_MJJ", prefix_out)
 inputdir = "HHbbWW_20200401_NNoutput_MjjCR_NNcutstudy2D/"
-#parseDatacards_NNcut2D(inputdir, nnout, prefix_out)
-#parseDatacards_NNcut2D(inputdir, "nnout_MTandMT2", prefix_out)
+parseDatacards_NNcut2D(inputdir, nnout, prefix_out)
+parseDatacards_NNcut2D(inputdir, "nnout_MTandMT2", prefix_out)
 parseDatacards_NNcut2D(inputdir, "nnout_MTandMT2_MJJ", prefix_out)
 #masslist = [260, 270, 400, 750, 900]
 #masslist = [400]

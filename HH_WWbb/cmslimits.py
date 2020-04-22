@@ -213,7 +213,14 @@ def CombineLimitplots(filelist, histlist, masspoints, xtitle, legends, text, plo
     leg = ROOT.TLegend(0.17,0.2,0.4,0.2+0.045*len(tfilelist))
     leg.SetFillColor(ROOT.kWhite)
     leg.SetTextFont(42)
-    leg.SetHeader("Observed")
+    #leg.SetHeader("Observed")
+    leg.SetHeader("Expected Limits")
+    for i, tf in enumerate(tfilelist):
+        tf.cd()
+        g_data = tf.Get(histlist[i]+"_data")
+        g_data.SetLineColor(colors[i])
+        g_data.SetMarkerColor(colors[i])
+        g_data.SetMarkerStyle(markers[i])
     for i, tf in enumerate(tfilelist):
         tf.cd()
         g_data = tf.Get(histlist[i]+"_data")
@@ -241,21 +248,27 @@ def CombineLimitplots(filelist, histlist, masspoints, xtitle, legends, text, plo
     c1.SaveAs(plotname+"_95Upperlmit_data_HHbbWW_combined_v2.pdf")
     c1.SaveAs(plotname+"_95Upperlmit_data_HHbbWW_combined_v2.C")
 
-def makeBrazilPlot(masspoints, alllimits, xtitle, text, plotname):
+def makeBrazilPlot(masspoints_v0, alllimits, xtitle, text, plotname):
+    drawData = False
     onesigma_up = []
     twosigma_up = []
     onesigma_low = []
     twosigma_low = []
     central = []
     data = []
-    for mass in masspoints:
+    masspoints = []
+    for mass in masspoints_v0:
         limits = alllimits[mass]	
+        if len(limits.keys()) < 6:
+            print("warning!!!!!!, not all limits found on mass %d"%mass, limits)
+            continue
         central.append(limits[50.0])
         twosigma_low.append(limits[2.5])
         onesigma_low.append(limits[16.0])
         onesigma_up.append(limits[84.0])
         twosigma_up.append(limits[97.5])
     	data.append(limits[-1])
+        masspoints.append(mass)
     fakeerrors = [0.0]*len(masspoints)
     #g_onesigma = TGraphAsymmErrors(len(masspoints),  np.array(masspoints),  np.array(central), np.array(fakeerrors), np.array(fakeerrors), np.array(onesigma_low), np.array(onesigma_up))
     #g_twosigma = TGraphAsymmErrors(len(masspoints),  np.array(masspoints),  np.array(central), np.array(fakeerrors), np.array(fakeerrors), np.array(twosigma_low), np.array(twosigma_up))
@@ -318,7 +331,8 @@ def makeBrazilPlot(masspoints, alllimits, xtitle, text, plotname):
     g_twosigma.Draw("fe3same")
     g_onesigma.Draw("fe3same")
     g_central.Draw("lpsame")
-    g_data.Draw("lpsame")
+    if drawData :
+	g_data.Draw("lpsame")
     suffixname =  plotname.split("/")[-1]
     g_data.SetName("%s_data"%suffixname)
     g_central.SetName("%s_central"%suffixname)
@@ -333,7 +347,8 @@ def makeBrazilPlot(masspoints, alllimits, xtitle, text, plotname):
     leg = ROOT.TLegend(0.65,0.8,0.9,0.90)
     leg.SetFillColor(ROOT.kWhite)
     leg.SetTextFont(42)
-    leg.AddEntry(g_data,"Observed","pl")
+    if drawData :
+	leg.AddEntry(g_data,"Observed","pl")
     leg.AddEntry(g_central,"Expected 95% upper limit","l")
     leg.AddEntry(g_onesigma,"1 std. deviation, Expected","f")
     leg.AddEntry(g_twosigma,"2 std. deviation, Expected","f")
@@ -437,7 +452,7 @@ def runCMSHIG17006Limits(masslist, workdir, generatescripts, runscripts, plotsuf
     #scriptsuffix = "" ##HIG-17-006
     #scriptsuffix = "signalxsec10"
 
-    scriptsuffix = "signalxsec1fb"
+    scriptsuffix = "signalxsec1fb_tminus1"
     fname_all = workdir+"Radion_allinOne_run_asymptotic_%s.sh"%(scriptsuffix)
     if generatescripts :
 	script_all = open(fname_all, "write")
@@ -449,6 +464,11 @@ def runCMSHIG17006Limits(masslist, workdir, generatescripts, runscripts, plotsuf
 	    thisdir = workdir + "M%d/"%mass
 	    for channel in channels:
 	        ch2 = channel
+		ws_fname = thisdir+"GGToX0ToHHTo2B2L2Nu_M%d_%s_combine_workspace.root"%(mass, channel)
+		#if not os.path.isfile(ws_fname):
+		#    print("failed to find workspace: ", ws_fname)
+		#else:
+		#    continue
 		fname = thisdir+"Radion_M%d_%s_run_asymptotic_%s.sh"%(mass, channel, scriptsuffix)
 		script_all.write("source "+fname + "\n")
 		script = open(fname, "write")
@@ -462,9 +482,31 @@ def runCMSHIG17006Limits(masslist, workdir, generatescripts, runscripts, plotsuf
 		script.write("fi\n\n")
 		script.write("# Run limit\n\n")
 		#script.write("combine -M AsymptoticLimits --rMax 500 -m {mass} -n GGToX0ToHHTo2B2L2Nu_M{mass}_{ch} GGToX0ToHHTo2B2L2Nu_M{mass}_{ch}_combine_workspace.root &> GGToX0ToHHTo2B2L2Nu_M{mass}_{ch}_{suffix}.log\n".format(mass = mass, ch = channel,  suffix =scriptsuffix))
-		script.write("combine -M AsymptoticLimits --rMax 500 -m {mass} -n GGToX0ToHHTo2B2L2Nu_M{mass}_{ch} GGToX0ToHHTo2B2L2Nu_M{mass}_{ch}_combine_workspace.root -s 1 -t 100 -V  &> GGToX0ToHHTo2B2L2Nu_M{mass}_{ch}_{suffix}.log\n".format(mass = mass, ch = channel,  suffix =scriptsuffix))
+		#script.write("combine -M AsymptoticLimits --rMax 500 -m {mass} -n GGToX0ToHHTo2B2L2Nu_M{mass}_{ch} GGToX0ToHHTo2B2L2Nu_M{mass}_{ch}_combine_workspace.root -s 1 -t 100   &> GGToX0ToHHTo2B2L2Nu_M{mass}_{ch}_{suffix}.log\n".format(mass = mass, ch = channel,  suffix =scriptsuffix))
 		#script.write("combine  --rMax 500 -m {mass} -n GGToX0ToHHTo2B2L2Nu_M{mass}_{ch} GGToX0ToHHTo2B2L2Nu_M{mass}_{ch}_combine_workspace.root \n".format(mass = mass, ch = channel,  suffix =scriptsuffix))
 		#script.write("combine -M Asymptotic --rMax 500 -m {mass} -n GGToX0ToHHTo2B2L2Nu_M{mass}_{ch} GGToX0ToHHTo2B2L2Nu_M{mass}_{ch}_combine_workspace.root -S 1 &> GGToX0ToHHTo2B2L2Nu_M{mass}_{ch}_{suffix}.log\n".format(mass = mass, ch = channel,  suffix =scriptsuffix))
+		script.write("for i in $(seq 1 1 10)\n")
+		script.write("do \n")
+		#script.write("combine -M AsymptoticLimits --rMax 500 -m {mass} -n GGToX0ToHHTo2B2L2Nu_M{mass}_{ch} GGToX0ToHHTo2B2L2Nu_M{mass}_{ch}_combine_workspace.root -s $i  &> GGToX0ToHHTo2B2L2Nu_M{mass}_{ch}_{suffix}.log\n".format(mass = mass, ch = channel,  suffix =scriptsuffix))
+		script.write("combine -M AsymptoticLimits -m {mass} -n GGToX0ToHHTo2B2L2Nu_M{mass}_{ch} GGToX0ToHHTo2B2L2Nu_M{mass}_{ch}_combine_workspace.root -s $i -t -1 --verbose 1  &> GGToX0ToHHTo2B2L2Nu_M{mass}_{ch}_{suffix}.log\n".format(mass = mass, ch = channel,  suffix =scriptsuffix))
+		script.write("error_msg=$(grep 'Minimized function has error status' GGToX0ToHHTo2B2L2Nu_M{mass}_{ch}_{suffix}.log)\n".format(mass = mass, ch = channel,  suffix =scriptsuffix))
+		#Observed Limit: r < 1.5909
+		#Expected  2.5%: r < 10.4897
+		#Expected 16.0%: r < 14.9388
+		#Expected 50.0%: r < 21.6562
+		#Expected 84.0%: r < 30.8926
+		#Expected 97.5%: r < 41.9544
+		script.write("obs=$(grep 'Observed Limit' GGToX0ToHHTo2B2L2Nu_M{mass}_{ch}_{suffix}.log)\n".format(mass = mass, ch = channel,  suffix =scriptsuffix))
+		script.write("Exp025=$(grep 'Expected  2.5%' GGToX0ToHHTo2B2L2Nu_M{mass}_{ch}_{suffix}.log)\n".format(mass = mass, ch = channel,  suffix =scriptsuffix))
+		script.write("Exp160=$(grep 'Expected 16.0%' GGToX0ToHHTo2B2L2Nu_M{mass}_{ch}_{suffix}.log)\n".format(mass = mass, ch = channel,  suffix =scriptsuffix))
+		script.write("Exp500=$(grep 'Expected 50.0%' GGToX0ToHHTo2B2L2Nu_M{mass}_{ch}_{suffix}.log)\n".format(mass = mass, ch = channel,  suffix =scriptsuffix))
+		script.write("Exp840=$(grep 'Expected 84.0%' GGToX0ToHHTo2B2L2Nu_M{mass}_{ch}_{suffix}.log)\n".format(mass = mass, ch = channel,  suffix =scriptsuffix))
+		script.write("Exp975=$(grep 'Expected 97.5%' GGToX0ToHHTo2B2L2Nu_M{mass}_{ch}_{suffix}.log)\n".format(mass = mass, ch = channel,  suffix =scriptsuffix))
+		script.write("if [[ -z $error_msg && ! -z $Exp025 && ! -z $Exp160 && ! -z $Exp500 && ! -z $Exp840 && ! -z $Exp975 ]]; then\n")
+		script.write("break \n")
+		script.write("fi \n")
+		script.write("done \n")
+
 		script.write("popd\n")
 		script.write("echo 'finish channel %s'\n"% channel)
 
@@ -507,6 +549,7 @@ def makeLimitsPlots(masslist, workdir, plotsuffix=""):
     #scriptsuffix = "signalxsec10"
 
     scriptsuffix = "signalxsec1fb"
+    scriptsuffix = "signalxsec1fb_tminus1"
     #fname_all = workdir+"Radion_allinOne_run_asymptotic_%s.sh"%(scriptsuffix)
     #os.system("source "+fname_all)
     alllimits = {}
@@ -528,7 +571,7 @@ def makeLimitsPlots(masslist, workdir, plotsuffix=""):
 		print("file does not exist, skipped!!! : ", logfile)
 		skippedscript.append(fname)
 		continue
-	    limits = extractlimitfromtxtfile_t100(logfile) 
+	    limits = extractlimitfromtxtfile(logfile) 
 	    if len(limits) != 6:
 		print("+++++++++++  Warning!!!, Failed to get limits!!  ", limits," +++++++++++")
 	    #print "limits ",limits
@@ -543,7 +586,8 @@ def makeLimitsPlots(masslist, workdir, plotsuffix=""):
     for i, channel in enumerate(channels):
 	for mass in masslist:
 	    rowname =  channel+"_%d"%mass
-	    writer.writerow([ [rowname]  + [alllimits[channel][mass][key] for key in [-1, 2.5, 16.0, 50.0, 84.0, 97.5]] ])
+	    writer.writerow([ [rowname]  + [alllimits[channel][mass][key] for key in [-1, 2.5, 16.0, 50.0, 84.0, 97.5] if key in alllimits[channel][mass].keys()] ])
+	    #writer.writerow([ [rowname]  + [alllimits[channel][mass][key] for key in [-1, 2.5, 16.0, 50.0, 84.0, 97.5] ] ])
 	    #for key, value in alllimits[channel][mass].items():
 	print("start work on brazil plot "+"Radion_"+channel+"_"+scriptsuffix+"_"+plotsuffix)
 	plotname = os.path.join(workdir, "Radion_"+channel+"_"+scriptsuffix+"_"+plotsuffix)
@@ -566,8 +610,8 @@ def getlimits_nncut1D(masslist, nnout, outdir_prefix):
     ## 4. generate a condor script 
     ## 5. one script to run all condor jobs 
     NNcutlist = [0.0, 0.04,  0.12,  0.20,  0.28, 0.36, 0.40,  0.48,  0.56, 0.60,  0.72]
-    #NNcutlist = [  0.20,  0.28, 0.36, 0.40,  0.48,  0.56, 0.60,  0.72]
-    #nnout = "nnout_MTonly"
+    #NNcutlist = [ 0.12,  0.20,  0.28, 0.36, 0.40,  0.48,  0.56, 0.60,  0.72]
+    NNcutlist = [0.0, 0.04]
     pwd = "/afs/cern.ch/work/t/tahuang/CombinedLimit/ForGithub/CMSSW_8_1_0/src/HiggsAnalysis/CombinedLimit/HH_WWbb/"
     condordir = pwd+"/condor/"
     subcondorname = condordir + "submitall_limits1D.sh"
@@ -578,15 +622,16 @@ def getlimits_nncut1D(masslist, nnout, outdir_prefix):
 	outdir = outdir_prefix+"_"+nnout+"_"+nncutsuffix+"_limits/"
 	workdir = pwd+outdir
 	print("nncutsuffix ", nncutsuffix, " outdir ", outdir)
-	#runCMSHIG17006Limits(masslist, workdir, False, True, nncutsuffix)
+	#runCMSHIG17006Limits(masslist, workdir, True, True, nncutsuffix)
 
         subcondor.write("condor_submit "+"Batch_%s.cmd"%(outdir[:-1])+"\n")
     os.system("chmod 775 "+subcondorname)
     for nncut in NNcutlist:
 	nncutsuffix = "nnstep0p04_nncut0p%s"%(str(nncut)[2:])
 	outdir = outdir_prefix+"_"+nnout+"_"+nncutsuffix+"_limits/"
+	plotsuffix = nncutsuffix+"_NNonly_"+nnout
 	workdir = pwd+outdir
-        makeLimitsPlots(masslist, workdir, nncutsuffix)
+        makeLimitsPlots(masslist, workdir, plotsuffix)
 
 def getlimits_nncut2D(masslist, nnout, outdir_prefix):
     ## 1. prepare data 
@@ -595,8 +640,7 @@ def getlimits_nncut2D(masslist, nnout, outdir_prefix):
     ## 4. generate a condor script 
     ## 5. one script to run all condor jobs 
     NNcutlist = [0.0, 0.04,  0.12,  0.20,  0.28, 0.36, 0.40,  0.48,  0.56, 0.60,  0.72]
-    NNcutlist = [0.12] ## only 0.12 jobs are submited
-    #NNcutlist = [  0.20,  0.28, 0.36, 0.40,  0.48,  0.56, 0.60,  0.72]
+    #NNcutlist = [0.12] ## only 0.12 jobs are submited
     #nnout = "nnout_MTonly"
     pwd = "/afs/cern.ch/work/t/tahuang/CombinedLimit/ForGithub/CMSSW_8_1_0/src/HiggsAnalysis/CombinedLimit/HH_WWbb/"
     condordir = pwd+"/condor/"
@@ -608,15 +652,16 @@ def getlimits_nncut2D(masslist, nnout, outdir_prefix):
 	outdir = outdir_prefix+"_NNvsHME_"+nnout+"_"+nncutsuffix+"_limits2D/"
 	workdir = pwd+outdir
 	print("nncutsuffix ", nncutsuffix, " outdir ", outdir)
-	runCMSHIG17006Limits(masslist, workdir, True, True, nncutsuffix)
+	#runCMSHIG17006Limits(masslist, workdir, True, True, nncutsuffix)
 
         subcondor.write("condor_submit "+"Batch_%s.cmd"%(outdir[:-1])+"\n")
     os.system("chmod 775 "+subcondorname)
     for nncut in NNcutlist:
 	nncutsuffix = "nnstep0p04_nncut0p%s"%(str(nncut)[2:])
-	outdir = outdir_prefix+"_"+nnout+"_"+nncutsuffix+"_limits/"
+	plotsuffix = nncutsuffix+"_NNvsHME_"+nnout
+	outdir = outdir_prefix+"_NNvsHME_"+nnout+"_"+nncutsuffix+"_limits2D/"
 	workdir = pwd+outdir
-        #makeLimitsPlots(masslist, workdir, nncutsuffix)
+        makeLimitsPlots(masslist, workdir, plotsuffix)
         
         
 
@@ -643,9 +688,9 @@ pwd = "/afs/cern.ch/work/t/tahuang/CombinedLimit/ForGithub/CMSSW_8_1_0/src/Higgs
 condordir = pwd+"/condor/"
 open(condordir+"submitall_limits1D.sh","write")
 open(condordir+"submitall_limits2D.sh","write")
-#getlimits_nncut1D(masslist, "nnout_MTonly", "GGToX0ToHHTo2B2L2Nu")
-#getlimits_nncut1D(masslist, "nnout_MTandMT2", "GGToX0ToHHTo2B2L2Nu")
-#getlimits_nncut1D(masslist, "nnout_MTandMT2_MJJ", "GGToX0ToHHTo2B2L2Nu")
+getlimits_nncut1D(masslist, "nnout_MTonly", "GGToX0ToHHTo2B2L2Nu")
+getlimits_nncut1D(masslist, "nnout_MTandMT2", "GGToX0ToHHTo2B2L2Nu")
+getlimits_nncut1D(masslist, "nnout_MTandMT2_MJJ", "GGToX0ToHHTo2B2L2Nu")
 #getlimits_nncut2D(masslist, "nnout_MTonly", "GGToX0ToHHTo2B2L2Nu")
 #getlimits_nncut2D(masslist, "nnout_MTandMT2", "GGToX0ToHHTo2B2L2Nu")
 #getlimits_nncut2D(masslist, "nnout_MTandMT2_MJJ", "GGToX0ToHHTo2B2L2Nu")
