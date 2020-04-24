@@ -22,7 +22,8 @@ nnframe->Draw()
  */
 
 
-// Signal: assume input signal cross section is 5pb, rescale it into 1fb by 1e-3/5.0
+// Signal: assume input signal cross section is 5pb from THistogram, rescale it into 1fb by 1e-3/5.0 before storing it into a workspace
+// Inject 1fb signal into combine tool
 
 static const unsigned int NProcess = 9;
 static const unsigned int NSystematic = 9;
