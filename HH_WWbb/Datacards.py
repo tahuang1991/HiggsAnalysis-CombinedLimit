@@ -240,6 +240,8 @@ class Datacards(object):
             datacardfile.write("\n")
 
     
+
+	#datacardfile.write("* autoMCStats 0 \n")
         datacardfile.close()
 
 
@@ -329,6 +331,7 @@ class Datacards(object):
             datacardfile.write("\n")
 
     
+	#datacardfile.write("* autoMCStats 0 \n")
         datacardfile.close()
 
 
