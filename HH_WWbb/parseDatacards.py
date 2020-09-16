@@ -7,18 +7,88 @@ import Datacards
 import sys
 
 
+processlist = 	["TTbar","SingleTop","Drell_Yan","data_untagged","TTbar_untagged","SingleTop_untagged", "ttV","VV","Signal"]
+statslist =     ["CMS_eff_b_heavy","CMS_eff_b_light","CMS_pu", "CMS_pdf", "CMS_eff_trigger","CMS_eff_e","CMS_eff_mu","CMS_iso_mu","QCDscale"]
+
+
+def createShapes_1D(masslist, filesuffix, inputdir, prefix_out, outdir):
+    for mass in masslist:
+	processnames = ["TT","sT","DY","data_untagged","TT_untagged","sT_untagged","ttV","VV", "RadionM{}".format(mass)]
+        outdir_mass = os.path.join(outdir, "M%d"%mass)
+	thisfilesuffix = filesuffix
+	#if not parametricDNN:
+	#    thisfilesuffix = filesuffix.replace("dedicatedDNN", "dedicatedDNN%d"%mass)
+        infile = os.path.join(inputdir, "%s_SignalM%d.root"%(thisfilesuffix, mass))
+
+	print("filesuffix ", filesuffix," thisfilesuffix ", thisfilesuffix," infile ", infile)
+	infile = ROOT.TFile.Open(infile)
+        channels = ["MuMu","MuEl","ElEl"]
+	if not os.path.exists(outdir_mass):
+	    os.system("mkdir "+outdir_mass)
+        for channel in channels:
+            outfile_name = os.path.join(outdir_mass, prefix_out+"_M%d_%s_autoMC.root"%(mass, channel))
+	    outfile  = ROOT.TFile.Open(outfile_name, "recreate")
+
+	    histname_data_obs = "data_obs_{ch}_M{m}".format(ch = channel, m = mass)
+	    hist_data_obs = infile.Get(histname_data_obs)
+	    hist_clone_data_obs = hist_data_obs.Clone("data_obs")
+	    outfile.Write()
+	    del hist_clone_data_obs
+	    for i, process in enumerate(processlist):
+	      if (channel == "MuMu" or channel == "ElEl") and process == "Drell_Yan":
+		continue
+	      if channel == "MuEl" and ("untagged" in process):
+		continue
+	      histname_nominal = processnames[i]+"_"+channel
+	      hist_nominal = infile.Get(histname_nominal)
+	      if "Signal" in process:
+		hist_nominal.Scale(1e-3/5.0)
+	      hist_clone_nominal = hist_nominal.Clone(processlist[i])
+	      outfile.Write()
+	      del hist_clone_nominal
+	      if "data" in process:
+		continue
+	      for stat in statslist:
+		histname_up = processnames[i]+"_"+channel+"_"+stat+"_up"
+		histname_down = processnames[i]+"_"+channel+"_"+stat+"_down"
+		histname_sys = process+"_"+stat
+		hist_up = infile.Get(histname_up)
+		hist_down = infile.Get(histname_down)
+		if "Signal" in process:
+		  hist_up.Scale(1e-3/5.0)
+		  hist_down.Scale(1e-3/5.0)
+		if "QCDscale" in histname_sys and "untagged" in histname_sys:
+		  histname_sys = process+"_"+stat+process.replace("_untagged", "")
+		elif "QCDscale" in histname_sys and "untagged" not in histname_sys:
+		  histname_sys = process+"_"+stat+process
+		if "CMS_eff_trigger" in histname_sys:
+		  histname_sys = process+"_"+stat+"_"+channel
+		hist_clone_up = hist_up.Clone(histname_sys+"Up")
+		hist_clone_down = hist_down.Clone(histname_sys+"Down")
+		outfile.Write()
+		del hist_clone_up
+		del hist_clone_down
+	    outfile.Close()
+
 def writeintoworkspace_1D(masslist,filesuffix, variable, xmin, xmax, inputdir, prefix_out, outdir):
+    parametricDNN = True
+    if "dedicatedDNN" in filesuffix:
+       parametricDNN = False
     #filesuffix = "Hhh_FinalBGYield_xsec1pb_NN_nnout_MTonly"
     #variable = "DNN"
     #xmin = 0.12; xmax = 2.76
     for mass in masslist:
         outdir_mass = os.path.join(outdir, "M%d"%mass)
-        infile = os.path.join(inputdir, "%s_SignalM%d.root"%(filesuffix, mass))
+	thisfilesuffix = filesuffix
+	#if not parametricDNN:
+	#    thisfilesuffix = filesuffix.replace("dedicatedDNN", "dedicatedDNN%d"%mass)
+	print("filesuffix ", filesuffix," thisfilesuffix ", thisfilesuffix)
+        infile = os.path.join(inputdir, "%s_SignalM%d.root"%(thisfilesuffix, mass))
         os.system("mkdir -p "+outdir_mass)
         channels = ["MuMu","MuEl","ElEl"]
         for channel in channels:
             outfile = os.path.join(outdir_mass, prefix_out+"_M%d_%s_shapes.root"%(mass, channel))
-            command = 'root -b -q "writeworkspace1D.C(%d, \\"%s\\", \\"%s\\", %f, %f,  \\"%s\\", \\"%s\\")"'%(mass, channel, variable, xmin, xmax, infile, outfile)
+            command = 'root -b -q "writeworkspace1D.C(%d, \\"%s\\", \\"%s\\", %f, %f,  \\"%s\\", \\"%s\\")" >> workspace1D.log'%(mass, channel, variable, xmin, xmax, infile, outfile)
             print "writeintoworkspace command ",command
             os.system(command)
         ### example
@@ -26,6 +96,9 @@ def writeintoworkspace_1D(masslist,filesuffix, variable, xmin, xmax, inputdir, p
         ###
 
 def writeintoworkspace_2D(masslist, filesuffix, variable, xmin, xmax, yvariable, ymin, ymax, inputdir, prefix_out, outdir):
+    parametricDNN = True
+    if "dedicatedDNN" in filesuffix:
+       parametricDNN = False
     #filesuffix = "Hhh_FinalBGYield_xsec1pb_NNvsHME_nnout_MTonly"
     #variable = "DNN"
     #xmin = 0.12; xmax = 2.76
@@ -35,12 +108,16 @@ def writeintoworkspace_2D(masslist, filesuffix, variable, xmin, xmax, yvariable,
     rootws = open(rootws_fname,"write")
     for mass in masslist:
         outdir_mass = os.path.join(outdir, "M%d"%mass)
-        infile = os.path.join(inputdir, "%s_SignalM%d.root"%(filesuffix, mass))
+	thisfilesuffix = filesuffix
+	if not parametricDNN:
+	    thisfilesuffix = filesuffix+"%d"%mass
+        infile = os.path.join(inputdir, "%s_SignalM%d.root"%(thisfilesuffix, mass))
+        #infile = os.path.join(inputdir, "%s_SignalM%d.root"%(filesuffix, mass))
         os.system("mkdir -p "+outdir_mass)
         channels = ["MuMu","MuEl","ElEl"]
         for channel in channels:
             outfile = os.path.join(outdir_mass, prefix_out+"_M%d_%s_shapes.root"%(mass, channel))
-            command = 'root -b -q "writeworkspace2D.C(%d, \\"%s\\", \\"%s\\", %f, %f, \\"%s\\", %f, %f,  \\"%s\\", \\"%s\\")"'%(mass, channel, variable, xmin, xmax, yvariable, ymin, ymax,  infile, outfile)
+            command = 'root -b -q "writeworkspace2D.C(%d, \\"%s\\", \\"%s\\", %f, %f, \\"%s\\", %f, %f,  \\"%s\\", \\"%s\\")" >> workspace2D.log'%(mass, channel, variable, xmin, xmax, yvariable, ymin, ymax,  infile, outfile)
             #print "writeintoworkspace command ",command
             #os.system(command)
 	    rootws.write(command+"\n")
@@ -50,9 +127,11 @@ def writeintoworkspace_2D(masslist, filesuffix, variable, xmin, xmax, yvariable,
 
 
 
-def generatedatacard(rootdir, masspoints, prefix, addobservation):
+def generatedatacard(rootdir, masspoints, prefix, addobservation, autoMC):
+    print("generate data card for ", rootdir)
     #channels = ["MuMu","MuEl","ElEl"]
     channels = ["MuMu","ElEl","MuEl"]
+    allchannels = ["MuMu","ElEl","MuEl","MuMu_ElEl_MuEl"]
     processes = ["TTbar","SingleTop","Drell_Yan","data_untagged","TTbar_untagged","SingleTop_untagged", "ttV","VV","Signal"]
     datacard = Datacards.Datacards()
     for mass in masspoints:
@@ -61,18 +140,32 @@ def generatedatacard(rootdir, masspoints, prefix, addobservation):
         if not os.path.isdir(dir_mass):
             print "wrong directory for root files including shapes ", dir_mass
             sys.exit()
+	for channel in allchannels:
+            outfile = os.path.join(dir_mass, prefix+"_M{mass}_{channel}.dat".format(mass = mass, channel = channel))
+            outfile2 = os.path.join(dir_mass, prefix+"_M{mass}_{channel}_autoMCthresh10.dat".format(mass = mass, channel = channel))
+            wsfile = os.path.join(dir_mass, prefix+"_M{mass}_{channel}_combine_workspace.root".format(mass = mass, channel = channel))
+            wsfile2 = os.path.join(dir_mass, prefix+"_M{mass}_{channel}_combine_workspace_autoMCthresh10.root".format(mass = mass, channel = channel))
+	    #GGToX0ToHHTo2B2L2Nu_M260_ElEl_signalxsec1fb_tminus1
+            limitfile  = os.path.join(dir_mass, prefix+"_M{mass}_{channel}_signalxsec1fb_tminus1.log".format(mass = mass, channel = channel))
+            limitfile2 = os.path.join(dir_mass, prefix+"_M{mass}_{channel}_signalxsec1fb_tminus1_autoMCthresh10.log".format(mass = mass, channel = channel))
+	    #os.system("mv "+outfile +" "+outfile2)
+	    #os.system("mv "+ wsfile +" "+wsfile2)
+	    #os.system("mv "+ limitfile +" "+limitfile2)
+
         for channel in channels:
-            thisrootfile = os.path.join(dir_mass, prefix+"_M{mass}_{channel}_shapes.root".format(mass = mass, channel = channel))
+            thisrootfile = os.path.join(dir_mass, prefix+"_M{mass}_{channel}_autoMC.root".format(mass = mass, channel = channel))
             channels_rootfile[channel] = thisrootfile
             if not os.path.isfile(thisrootfile):
                 print "rootfile does not exist ", thisrootfile
                 sys.exit()
             outfile = os.path.join(dir_mass, prefix+"_M{mass}_{channel}.dat".format(mass = mass, channel = channel))
 
-            #print "channel ",channel
-            datacard.generateDatacard( outfile, thisrootfile, channel, mass, addobservation)
+            #print "channel ",channel," outfile ",outfile
+            datacard.generateDatacard( outfile, thisrootfile, channel, mass, addobservation, autoMC)
         outfile_all = os.path.join(dir_mass, prefix+"_M{mass}_MuMu_ElEl_MuEl.dat".format(mass = mass))
-        datacard.generateDatacard_multichannels(outfile_all, channels_rootfile, channels, mass, addobservation)
+        datacard.generateDatacard_multichannels(outfile_all, channels_rootfile, channels, mass, addobservation, autoMC)
+        #outfile_MuMu_MuEl = os.path.join(dir_mass, prefix+"_M{mass}_MuMu_MuEl.dat".format(mass = mass))
+        #datacard.generateDatacard_multichannels(outfile_MuMu_MuEl, channels_rootfile, ["MuMu","MuEl"], mass, addobservation)
 
         
 
@@ -450,43 +543,86 @@ def Limitplots_HME(cardnameprefix, xpoints, mass,  method, text, plotname):
 
 
 def parseDatacards_NNcut1D(inputdir, nnout, outdir_prefix):
+    parametricDNN = True
+    autoMC = True
+    if "dedicatedDNN" in nnout:
+       parametricDNN = False
     masslist = [260, 270, 300, 350, 400, 450, 500, 550, 600, 650, 750, 800, 900]
+    #masslist = [400]
     NNout = "DNN";
     NNcutlist = [0.0, 0.04,  0.12,  0.20,  0.28, 0.36, 0.40,  0.48,  0.56, 0.60,  0.72]
-    NNcutlist = [0.04]
+    NNcutlist = [0.0]
+    NoMjjbins =False
+    if NoMjjbins:
+       outdir_prefix = outdir_prefix+"_MjjcutSonly"
+       #outdir_prefix = outdir_prefix+"_MjjMerged"
     #nnout = "nnout_MTonly"
     for nncut in NNcutlist:
-	nncutsuffix = "nnstep0p04_nncut0p%s"%(str(nncut)[2:])
+        
+	#nncutsuffix = "nnstep0p04_nncut0p%s"%(str(nncut)[2:])
+	#nncutsuffix = "nnstep0p05_nncut0p%s"%(str(nncut)[2:])
+	#nncutsuffix = "nnstep0p033_nncut0p%s"%(str(nncut)[2:])
+	#nncutsuffix = "nnstep0p025_nncut0p%s"%(str(nncut)[2:])
+	nncutsuffix = "nnstep0p1_nncut0p%s"%(str(nncut)[2:])
 	outdir = outdir_prefix+"_"+nnout+"_"+nncutsuffix+"_limits/"
 	os.system("mkdir -p "+outdir)
 	NNoutMin = nncut;  NNoutMax = 3.0-nncut*2
-	nncutsuffix = "nnstep0p04_nncut0p%s"%(str(nncut)[2:])
-	filesuffix = "Hhh_FinalBGYield_xsec1pb_NN_%s_%s"%( nnout, nncutsuffix)
-	writeintoworkspace_1D(masslist, filesuffix, NNout, NNoutMin, NNoutMax, inputdir, prefix_out, outdir)
+	if NoMjjbins:
+	    NNoutMax = 1.0-nncut*2 ## no Mjj macro bin
+	#filesuffix = "Hhh_FinalBGYield_xsec1pb_NN_%s_%s"%( nnout, nncutsuffix)
+	filesuffix = "Hhh_FinalBGYield_xsec1pb_NNvsHME_%s_%s"%( nnout, nncutsuffix)
+	
+	#if "dedicated" in nnout:
+	#    mass = int(nnout[-3:])
+	#    masslist = [mass]
+	
+	#writeintoworkspace_1D(masslist, filesuffix, NNout, NNoutMin, NNoutMax, inputdir, prefix_out, outdir)
+        createShapes_1D(masslist, filesuffix, inputdir, prefix_out, outdir)
 
     #writeintoworkspace_2D(masslist,inputdir, prefix_out, outdir)
-	generatedatacard(outdir, masslist, prefix_out, True)
+	generatedatacard(outdir, masslist, prefix_out, True, autoMC)
+
+def parseDatacards_HME1D(inputdir, nnout, outdir_prefix):
+    autoMC = True
+    filesuffix = "Hhh_FinalBGYield_xsec1pb_HME_%s"%(nnout)
+    outdir = outdir_prefix+"_"+nnout+"_limits/"
+    os.system("mkdir -p "+outdir)
+    masslist = [260, 270, 300, 350, 400, 450, 500, 550, 600, 650, 750, 800, 900]
+    createShapes_1D(masslist, filesuffix, inputdir, prefix_out, outdir)
+    generatedatacard(outdir, masslist, prefix_out, True, autoMC)
+
 
 
 def parseDatacards_NNcut2D(inputdir, nnout, outdir_prefix):
     masslist = [260, 270, 300, 350, 400, 450, 500, 550, 600, 650, 750, 800, 900]
     NNout = "DNN";
     NNcutlist = [0.0, 0.04,  0.12,  0.20,  0.28, 0.36, 0.40,  0.48,  0.56, 0.60,  0.72]
-    #NNcutlist = [ 0.48,  0.56, 0.60,  0.72]
+    NNcutlist = [0.0, 0.04,  0.12,  0.20]
+    NNcutlist = [0.0]
 
     HMEout = "HME"; HMEMin = 250.0; HMEMax=1200.0
     #nnout = "nnout_MTonly"
     for nncut in NNcutlist:
 	nncutsuffix = "nnstep0p04_nncut0p%s"%(str(nncut)[2:])
-	outdir = outdir_prefix+"_NNvsHME_"+nnout+"_"+nncutsuffix+"_limits2D/"
+	outdir = outdir_prefix+"_NNvsHME_"+nnout+"_"+nncutsuffix+"_HMEbinsv4_limits2D/"
+	#nncutsuffix = "nnstep0p05_nncut0p%s"%(str(nncut)[2:])
+	#nncutsuffix = "nnstep0p033_nncut0p%s"%(str(nncut)[2:])
+	#nncutsuffix = "nnstep0p025_nncut0p%s"%(str(nncut)[2:])
+	nncutsuffix = "nnstep0p1_nncut0p%s"%(str(nncut)[2:])
+	nncutsuffix = "nnstep0p02_nncut0p%s"%(str(nncut)[2:])
+	nncutsuffix = "nnstep0p2_nncut0p%s"%(str(nncut)[2:])
+	nncutsuffix = "nnstep0p01_nncut0p%s"%(str(nncut)[2:])
+	outdir = outdir_prefix+"_NNvsHME_"+nnout+"_"+nncutsuffix+"_HMEbinsv4_1p15_limits2D/"
+	#outdir = outdir_prefix+"_NNvsHME_"+nnout+"_"+nncutsuffix+"_HMEbinsv4_1p1_limits2D/"
+	#outdir = outdir_prefix+"_NNvsHME_"+nnout+"_"+nncutsuffix+"_HMEbinsv4_1p05_limits2D/"
+
 	os.system("mkdir -p "+outdir)
 	NNoutMin = nncut;  NNoutMax = 3.0-nncut*2
-	nncutsuffix = "nnstep0p04_nncut0p%s"%(str(nncut)[2:])
 	##HHbbWW_20200401_NNoutput_MjjCR_NNcutstudy2D/Hhh_FinalBGYield_xsec1pb_NNvsHME_nnout_MTonly_nnstep0p04_nncut0p72_
 	filesuffix = "Hhh_FinalBGYield_xsec1pb_NNvsHME_%s_%s"%( nnout, nncutsuffix)
 	#writeintoworkspace_1D(masslist, filesuffix, NNout, NNoutMin, NNoutMax, inputdir, prefix_out, outdir)
 
-	writeintoworkspace_2D(masslist,filesuffix, NNout, NNoutMin, NNoutMax, HMEout, HMEMin, HMEMax, inputdir, prefix_out, outdir)
+	#writeintoworkspace_2D(masslist,filesuffix, NNout, NNoutMin, NNoutMax, HMEout, HMEMin, HMEMax, inputdir, prefix_out, outdir)
 	#generatedatacard(outdir, masslist, prefix_out, True)
 
 prefix_out = "GGToX0ToHHTo2B2L2Nu"
@@ -498,17 +634,69 @@ output_suffix = '{:%Y-%m-%d}_{}'.format(datetime.date.today(), suffix)
 inputdir = "HHbbWW_20180625_NNoutput_MjjCR_test/"
 inputdir = "HHbbWW_20200331_NNoutput_MjjCR/"
 inputdir = "HHbbWW_20200401_NNoutput_MjjCR_NNcutstudy1D/"
+#inputdir = "HHbbWW_20200608_NNoutput_MjjCR_NNcutstudy1D_dedicatedDNN/"
+#inputdir = "HHbbWW_20200608_NNoutput_NOMjjCR_NNcutstudy1D_dedicatedDNN/"
+#inputdir = "HHbbWW_20200401_NNoutput_MjjCR_NNcutstudy1D_binsize005/"
+#inputdir = "HHbbWW_20200401_NNoutput_MjjCR_NNcutstudy1D_binsize0p033/"
+#inputdir = "HHbbWW_20200401_NNoutput_MjjCR_NNcutstudy1D_binsize0p025/"
+#inputdir = "HHbbWW_20200401_NNoutput_MjjCR_NNcutstudy1D_binsize0p10/"
+inputdir = "HHbbWW_20200807_NNoutput_MjjCR_NNcutstudy1D/"
+#inputdir = "HHbbWW_20200623_NNoutput_NoMjjCR_NNcutstudy1D/"
+#inputdir = "HHbbWW_20200623_NNoutput_NoMjjCRMjjcut_NNcutstudy1D/"
+inputdir = "HHbbWW_20200807_test_MjjSignalonly/"
+inputdir = "HHbbWW_20200812_NNoutput_MergedMjj_NNcutstudy1D_MCstat/"
+#inputdir = "HHbbWW_20200812_NNoutput_NoMjjCR_NNcutstudy1D_MCstat/"
+#inputdir = "HHbbWW_20200812_NNoutput_MjjCR_NNcutstudy1D_MCstat/"
+
+inputdir = "HHbbWW_20200814_NNvsHME_linearized1D_MjjCR_NNoutp1_HMEbinsv4_1p15/"
+#inputdir = "HHbbWW_20200814_NNvsHME_linearized1D_MjjcutSonly_NNoutp05_HMEbinsv4_1p15/"
+#inputdir = "HHbbWW_20200814_NNvsHME_linearized1D_MjjMerged_NNoutp05_HMEbinsv4_1p15/"
+inputdir = "HHbbWW_20200814_NNvsHME_linearized1D_MjjCR_HMEbinsv4_1p15/"
+#inputdir = "HHbbWW_20200814_NNvsHME_linearized1D_MjjcutSonly_HMEbinsv4_1p15/"
+#inputdir = "HHbbWW_20200814_NNvsHME_linearized1D_MjjMerged_NNoutp05_HMEbinsv4_1p15/"
+#inputdir = "HHbbWW_20200814_NNvsHME_linearized1D_MjjMerged_HMEbinsv4_1p15/"
+
+
+#### HME, anti DNN cut
+inputdir = "HHbbWW_20200821_HME_HMEbinsv4_1p05/"
+
 outdir = prefix_out+inputdir
 method = "Asymptotic"
 masslist = [260, 270, 300, 350, 400, 450, 500, 550, 600, 650, 750, 800, 900]
+#masslist = [260, 270, 300, 350, 400, 450, 500]
+#masslist = [400]
 nnout = "nnout_MTonly"
+#prefix_out = prefix_out+"_NNvsHME_MCstat"
 #parseDatacards_NNcut1D(inputdir, nnout, prefix_out)
 #parseDatacards_NNcut1D(inputdir, "nnout_MTandMT2", prefix_out)
 #parseDatacards_NNcut1D(inputdir, "nnout_MTandMT2_MJJ", prefix_out)
+### HME, anti DNN cut
+prefix_out = prefix_out + "_HME"
+parseDatacards_HME1D(inputdir, "nnout_MTandMT2cut0p8", prefix_out)
+parseDatacards_HME1D(inputdir, "nnout_MTandMT2_MJJcut0p8", prefix_out)
+#parseDatacards_NNcut1D(inputdir, "nnout_MTandMT2_HMEMJJ_dedicatedDNN", prefix_out)
+#parseDatacards_NNcut1D(inputdir, "nnout_MTandMT2_HME_dedicatedDNN", prefix_out)
+#parseDatacards_NNcut1D(inputdir, "nnout_MTandMT2_HMEMJJ_dedicatedDNN750", prefix_out)
+#parseDatacards_NNcut1D(inputdir, "nnout_MTandMT2_HME_dedicatedDNN750", prefix_out)
 inputdir = "HHbbWW_20200401_NNoutput_MjjCR_NNcutstudy2D/"
-parseDatacards_NNcut2D(inputdir, nnout, prefix_out)
-parseDatacards_NNcut2D(inputdir, "nnout_MTandMT2", prefix_out)
-parseDatacards_NNcut2D(inputdir, "nnout_MTandMT2_MJJ", prefix_out)
+inputdir = "HHbbWW_20200401_NNoutput_MjjCR_NNcutstudy2D_HMEbinsv2/"
+inputdir = "HHbbWW_20200401_NNoutput_MjjCR_NNcutstudy2D_HMEbinsv3/"
+inputdir = "HHbbWW_20200401_NNoutput_MjjCR_NNcutstudy2D_HMEbinsv4_1p1/"
+inputdir = "HHbbWW_20200401_NNoutput_MjjCR_NNcutstudy2D_HMEbinsv4_1p15/"
+#inputdir = "HHbbWW_20200401_NNoutput_MjjCR_NNcutstudy2D_HMEbinsv4_1p2/"
+#inputdir = "HHbbWW_20200401_NNoutput_MjjCR_NNcutstudy2D_HMEbinsv4_1p15_NNout0p05/"
+#inputdir = "HHbbWW_20200401_NNoutput_MjjCR_NNcutstudy2D_HMEbinsv4_1p15_NNout0p033/"
+#inputdir = "HHbbWW_20200401_NNoutput_MjjCR_NNcutstudy2D_HMEbinsv4_1p1_NNout0p025/"
+#inputdir = "HHbbWW_20200401_NNoutput_MjjCR_NNcutstudy2D_HMEbinsv4_1p15_NNout0p025/"
+#inputdir = "HHbbWW_20200401_NNoutput_MjjCR_NNcutstudy2D_HMEbinsv4_1p05/"
+inputdir  = "HHbbWW_20200401_NNoutput_MjjCR_NNcutstudy2D_HMEbinsv4_1p15_NNout0p1/"
+#inputdir  = "HHbbWW_20200401_NNoutput_MjjCR_NNcutstudy2D_HMEbinsv4_1p1_NNout0p02/"
+inputdir = "HHbbWW_20200401_NNoutput_MjjCR_NNcutstudy2D_HMEbinsv4_1p15_NNout0p02/"
+inputdir = "HHbbWW_20200401_NNoutput_MjjCR_NNcutstudy2D_HMEbinsv4_1p15_NNout0p2/"
+#inputdir = "HHbbWW_20200401_NNoutput_MjjCR_NNcutstudy2D_HMEbinsv4_1p15_NNout0p01/"
+#parseDatacards_NNcut2D(inputdir, nnout, prefix_out)
+#parseDatacards_NNcut2D(inputdir, "nnout_MTandMT2", prefix_out)
+#parseDatacards_NNcut2D(inputdir, "nnout_MTandMT2_MJJ", prefix_out)
 #masslist = [260, 270, 400, 750, 900]
 #masslist = [400]
 filesuffix = "Hhh_FinalBGYield_xsec1pb_NN_nnout_MTonly"

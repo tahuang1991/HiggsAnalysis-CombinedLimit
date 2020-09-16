@@ -31,7 +31,7 @@ static const unsigned int NSystematic = 9;
 const TObjString processes[ NProcess ] = {"TTbar","SingleTop","Drell_Yan","data_untagged","TTbar_untagged","SingleTop_untagged", "ttV","VV","Signal"};
 const TObjString systematics[ NSystematic ] = {"CMS_eff_b_heavy","CMS_eff_b_light","CMS_pu", "CMS_pdf", "CMS_eff_trigger","CMS_eff_e","CMS_eff_mu","CMS_iso_mu","QCDscale"};
 
-void writeworkspace2D(int mass, char* channel, char* variable, float xmin, float xmax, char* yvariable, float ymin, float ymax, char* infile, char* outfile){
+void writeworkspace2D(int mass, char const * channel, char const * variable, float xmin, float xmax, char const * yvariable, float ymin, float ymax, char const * infile, char const * outfile){
 
     //TFile *file = new TFile("MTonly_HME_2D_xsec1pb_20180302_2D_NNbin10/Hhh_FinalBGYield_2Dlimits_2018-03-08_nnout_MTonly.root", "UPDATE");
     TFile *out = new TFile(outfile, "recreate");
@@ -104,6 +104,10 @@ void writeworkspace2D(int mass, char* channel, char* variable, float xmin, float
             TString histname_down = processes_histname[i].GetString() +"_"+ channel + "_"+ systematics[j].GetString()+"_down";
             TH2F * hist_up = (TH2F*)  gDirectory->Get( histname_up );
             TH2F * hist_down = (TH2F*)  gDirectory->Get( histname_down );
+	    if (processes[i].GetString().Contains("Signal")){
+		hist_up->Scale(1e-3/5.0);
+		hist_down->Scale(1e-3/5.0);
+	    }
             //RooDataHist hist_up_Roodata (processes[i].GetString()+"_"+ systematics[j].GetString()+"_up_Roodata", processes[i].GetString()+"_"+ systematics[j].GetString()+"_up_Roodata", RooArgList(NN, HME), hist_up);
             TString hist_sys_name = processes[i].GetString()+"_"+ systematics[j].GetString();
 
