@@ -5,6 +5,13 @@ import os
 sys.argv.append( '-b' )
 
 
+channellatex = {
+    "MuMu":"#mu#mu",
+    "MuEl":"e#mu",
+    "ElEl":"ee",
+    "MuMu_ElEl_MuEl":"combined"
+}
+
 def plotLikelihoodScan1D(mass, channel, variable, xmin, xmax, plotdir, suffix):
     treename = "limit"
 
@@ -30,6 +37,11 @@ def plotLikelihoodScan1D(mass, channel, variable, xmin, xmax, plotdir, suffix):
     hist.Draw()
     hist.GetXaxis().SetTitle(variable)
     hist.GetYaxis().SetTitle("2*deltaNLL")
+    hist.SetTitle("Likelihood scan with Signal M=%d"%mass)
+
+    tex1 = ROOT.TLatex(0.2,0.8, channellatex[channel])
+    tex1.SetNDC(); tex1.SetTextSize(.045)
+    tex1.Draw("same")
 
     c1.SaveAs(plotdir+"Likelihoodscan_2deltaNLL_{var}_M{mass}_{ch}_{suffix}.pdf".format(mass=mass, ch = channel, suffix=suffix,var=variable))
 

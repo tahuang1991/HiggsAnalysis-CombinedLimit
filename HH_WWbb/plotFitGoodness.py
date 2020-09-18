@@ -4,6 +4,14 @@ import sys
 
 sys.argv.append( '-b' )
 
+
+channellatex = {
+    "MuMu":"#mu#mu",
+    "MuEl":"e#mu",
+    "ElEl":"ee",
+    "MuMu_ElEl_MuEl":"combined"
+}
+
 def extranumber(s):
     num = []
     for t in s.split():
@@ -42,6 +50,7 @@ def plotFitGoodness(mass, channel,plotdir, suffix):
     ts_data = extractTestStatisticfromtxtfile(ts_data_f)
     c1 = ROOT.TCanvas("c1","c1",600, 800)
     hist = ROOT.TH1F("test_statistic","test_statistics",50, 10.0, 60.0)
+    hist.SetTitle("Test statistics with Signal M=%d"%mass)
     hist.GetXaxis().SetTitle("Test_statistic")
     tree.Draw(branch+">> test_statistic")
     hmax = hist.GetMaximum()
@@ -57,6 +66,10 @@ def plotFitGoodness(mass, channel,plotdir, suffix):
     leg0.AddEntry(ts_data_line, "data: %.1f"%ts_data,"l")
     leg0.Draw("same")
 
+    tex1 = ROOT.TLatex(0.2,0.8, channellatex[channel])
+    tex1.SetNDC(); tex1.SetTextSize(.045)
+    tex1.Draw("same")
+
 
     c1.SaveAs(plotdir + "FitGoodness_M{mass}_{ch}_{suffix}.pdf".format(mass=mass, ch = channel, suffix=suffix))
     c1.SaveAs(plotdir + "FitGoodness_M{mass}_{ch}_{suffix}.C".format(mass=mass, ch = channel, suffix=suffix))
@@ -69,10 +82,13 @@ def plotAllFitGoodness(masslist, channels, plotdir, suffix):
 
 
 plotdir_fg = "FitGoodness_Plots/"
+if not os.path.exists(plotdir_fg):
+    os.system("mkdir "+plotdir_fg)
 masslist = [260, 270, 300, 350, 400, 450, 500, 550, 600, 650, 750, 800, 900]
 channels = ["ElEl","MuEl","MuMu", "MuMu_ElEl_MuEl"]   
 #plotFitGoodness(400, "MuMu",plotdir_fg, "MTandMT2_MJJ_HME_antinncut0p8")
-plotFitGoodness(800, "MuMu",plotdir_fg, "MTandMT2_MJJ_HME_antinncut0p8")
+#plotFitGoodness(800, "MuMu",plotdir_fg, "MTandMT2_MJJ_HME_antinncut0p8")
+plotAllFitGoodness(masslist, channels, plotdir_fg, "MTandMT2_MJJ_HME_antinncut0p8")
 
 
 

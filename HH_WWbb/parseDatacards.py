@@ -672,8 +672,9 @@ nnout = "nnout_MTonly"
 #parseDatacards_NNcut1D(inputdir, "nnout_MTandMT2_MJJ", prefix_out)
 ### HME, anti DNN cut
 prefix_out = prefix_out + "_HME"
-parseDatacards_HME1D(inputdir, "nnout_MTandMT2cut0p8", prefix_out)
-parseDatacards_HME1D(inputdir, "nnout_MTandMT2_MJJcut0p8", prefix_out)
+#parseDatacards_HME1D(inputdir, "nnout_MTandMT2cut0p8", prefix_out)
+#parseDatacards_HME1D(inputdir, "nnout_MTandMT2_MJJcut0p8", prefix_out)
+parseDatacards_HME1D(inputdir, "nnout_MTandMT2_MJJcut0p95", prefix_out)
 #parseDatacards_NNcut1D(inputdir, "nnout_MTandMT2_HMEMJJ_dedicatedDNN", prefix_out)
 #parseDatacards_NNcut1D(inputdir, "nnout_MTandMT2_HME_dedicatedDNN", prefix_out)
 #parseDatacards_NNcut1D(inputdir, "nnout_MTandMT2_HMEMJJ_dedicatedDNN750", prefix_out)

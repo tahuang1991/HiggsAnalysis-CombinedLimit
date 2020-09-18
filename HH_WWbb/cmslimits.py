@@ -385,8 +385,9 @@ def runImpacts(masslist, workdir, prefix, generatescripts, runscripts):
     #scriptsuffix = "signalxsec1fb_tminus1_rmax20"
     #scriptsuffix = "signalxsec1fb_tminus1_autoboundPOI"
     scriptsuffix = "signalxsec1fb_tminus1_peterExpectS1"
-    scriptsuffix = "signalxsec1fb_tminus1_peterExpectUp95"
-    scriptsuffix = "signalxsec1fb_tminus1_peternNoExpectSignalrmax100"
+    #scriptsuffix = "signalxsec1fb_tminus1_peterExpectUp95"
+    #scriptsuffix = "signalxsec1fb_tminus1_peternNoExpectSignalrmax100"
+    #scriptsuffix = "signalxsec1fb_tminus1_peterExpectS0"
     limitsuffix = "signalxsec1fb_tminus1_autoMCthresh10"
     #channels = ["MuMu_ElEl_MuEl"]
     if generatescripts:
@@ -442,35 +443,43 @@ queue
 		#script.write("    text2workspace.py {prefix}_M{mass}_{ch}.dat -m {mass} -o {prefix}_M{mass}_{ch}_combine_workspace.root -P HiggsAnalysis.CombinedLimit.DYEstimationCombineModel:DYDataDrivenEstimationModelInstance\n".format(mass = mass, ch = channel, prefix=prefix))
 		script.write("fi\n\n")
 
+		script.write("# Run impacts, -t -1 to fit on Asimov data\n\n")
 		##likelihood scan 
 		script.write("## example of likelihoodscan \n")
 		script.write("## $ root -l higgsCombineTest.MultiDimFit.mH125.root \n")
 	        script.write('## limit->Draw("2*deltaNLL:r_ggH:r_qqH>>h(44,0,10,44,0,4)","2*deltaNLL<10","prof colz") \n')
 		### combine -m 800 -M MultiDimFit --saveWorkspace -n teststep1 GGToX0ToHHTo2B2L2Nu_NNvsHME_MCstat_M800_MuMu_combine_workspace.root -t -1 --verbose 3
 		script.write("combine --rMin 0 -m {mass} -M MultiDimFit {prefix}_M{mass}_{ch}_combine_workspace.root -t -1 --verbose 3 &> {prefix}_M{mass}_{ch}_bestfit.log ## bestfit \n".format(mass = mass, ch = channel, prefix=prefix))
-		script.write("combine {prefix}_M{mass}_{ch}_combine_workspace.root -n {prefix}_M{mass}_{ch}_rscan -M MultiDimFit --algo grid --points 2000 --setParameterRanges r=-1,2 -m {mass} --autoRange 1 --squareDistPoiStep -t -1 --fastScan \n\n".format(mass = mass, ch = channel, prefix=prefix))
-		script.write("# Run impacts, -t -1 to fit on Asimov data\n\n")
+		## script.write("combine {prefix}_M{mass}_{ch}_combine_workspace.root -n {prefix}_M{mass}_{ch}_rscan -M MultiDimFit --algo grid --points 2000 --rMin -1 --rMax 100 -m {mass} --autoRange 1 --squareDistPoiStep -t -1 --fastScan  --expectSignal=0 \n\n".format(mass = mass, ch = channel, prefix=prefix))
 		### include step1, step2, step3, plotImpact
 		### autoBoundsPOIs
 		#script.write("combineTool.py -M Impacts -m {mass} -n {prefix}_M{mass}_{ch}_impacts -d {prefix}_M{mass}_{ch}_combine_workspace.root --doInitialFit --autoBoundsPOIs r -t -1 &> {prefix}_M{mass}_{ch}_impacts_{suffix}_step1.log\n".format(mass = mass, ch = channel,  suffix =scriptsuffix, prefix=prefix))
 		#script.write("combineTool.py -M Impacts -m {mass} -n {prefix}_M{mass}_{ch}_impacts -d {prefix}_M{mass}_{ch}_combine_workspace.root --doFits --parallel 4 --autoBoundsPOIs r -t -1 &> {prefix}_M{mass}_{ch}_impacts_{suffix}_step2.log\n".format(mass = mass, ch = channel,  suffix =scriptsuffix, prefix=prefix))
 		#script.write("combineTool.py -M Impacts -m {mass} -n {prefix}_M{mass}_{ch}_impacts -d {prefix}_M{mass}_{ch}_combine_workspace.root -o {prefix}_M{mass}_{ch}_impacts_{suffix}.json --autoBoundsPOIs r -t -1 &> {prefix}_M{mass}_{ch}_impacts_{suffix}_step3.log\n".format(mass = mass, ch = channel,  suffix =scriptsuffix, prefix=prefix))
+
 		#### Peter with expected signal = 1.0
-		#script.write("combineTool.py -M Impacts -m {mass} -n {prefix}_M{mass}_{ch}_impacts_S1 -d {prefix}_M{mass}_{ch}_combine_workspace.root --doInitialFit --cminDefaultMinimizerStrategy 0 --robustFit 1 --X-rtd MINIMIZER_analytic --expectSignal=1 -t -1 &> {prefix}_M{mass}_{ch}_impacts_{suffix}_step1.log\n".format(mass = mass, ch = channel,  suffix =scriptsuffix, prefix=prefix))
-		#script.write("combineTool.py -M Impacts -m {mass} -n {prefix}_M{mass}_{ch}_impacts_S1 -d {prefix}_M{mass}_{ch}_combine_workspace.root --doFits --parallel 4 --cminDefaultMinimizerStrategy 0 --robustFit 1 --X-rtd MINIMIZER_analytic --expectSignal=1 -t -1 &> {prefix}_M{mass}_{ch}_impacts_{suffix}_step2.log\n".format(mass = mass, ch = channel,  suffix =scriptsuffix, prefix=prefix))
-		#script.write("combineTool.py -M Impacts -m {mass} -n {prefix}_M{mass}_{ch}_impacts_S1 -d {prefix}_M{mass}_{ch}_combine_workspace.root -o {prefix}_M{mass}_{ch}_impacts_{suffix}.json --cminDefaultMinimizerStrategy 0 --robustFit 1 --X-rtd MINIMIZER_analytic --expectSignal=1 -t -1 &> {prefix}_M{mass}_{ch}_impacts_{suffix}_step3.log\n".format(mass = mass, ch = channel,  suffix =scriptsuffix, prefix=prefix))
+		script.write("combine {prefix}_M{mass}_{ch}_combine_workspace.root -n M{mass}_{ch}_rscan_expectS1 -M MultiDimFit --algo grid --points 2000 --rMin -1 --rMax 100 -m {mass} --autoRange 1 --squareDistPoiStep -t -1 --fastScan  --expectSignal=1 \n\n".format(mass = mass, ch = channel, prefix=prefix))  ### r scan 
+		script.write("combineTool.py -M Impacts --rMax 100 -m {mass} -n {prefix}_M{mass}_{ch}_impacts_S1 -d {prefix}_M{mass}_{ch}_combine_workspace.root --doInitialFit --cminDefaultMinimizerStrategy 0 --robustFit 1 --X-rtd MINIMIZER_analytic --expectSignal=1 -t -1 &> {prefix}_M{mass}_{ch}_impacts_{suffix}_step1.log\n".format(mass = mass, ch = channel,  suffix =scriptsuffix, prefix=prefix))
+		script.write("combineTool.py -M Impacts --rMax 100 -m {mass} -n {prefix}_M{mass}_{ch}_impacts_S1 -d {prefix}_M{mass}_{ch}_combine_workspace.root --doFits --parallel 4 --cminDefaultMinimizerStrategy 0 --robustFit 1 --X-rtd MINIMIZER_analytic --expectSignal=1 -t -1 &> {prefix}_M{mass}_{ch}_impacts_{suffix}_step2.log\n".format(mass = mass, ch = channel,  suffix =scriptsuffix, prefix=prefix))
+		script.write("combineTool.py -M Impacts --rMax 100 -m {mass} -n {prefix}_M{mass}_{ch}_impacts_S1 -d {prefix}_M{mass}_{ch}_combine_workspace.root -o {prefix}_M{mass}_{ch}_impacts_{suffix}.json --cminDefaultMinimizerStrategy 0 --robustFit 1 --X-rtd MINIMIZER_analytic --expectSignal=1 -t -1 &> {prefix}_M{mass}_{ch}_impacts_{suffix}_step3.log\n".format(mass = mass, ch = channel,  suffix =scriptsuffix, prefix=prefix))
 		#### Peter with expected signal = 95% upper limit/100
-		#script.write("Exp500=$(awk '/Expected 50.0%%/{print $5}' %s)\n"%limitlog)
+		#script.write("Exp500f=$(awk '/Expected 50.0%%/{print $5}' %s)\n"%limitlog)
+		#script.write("Exp500=${Exp500f%f.*} \n")
 		#script.write("if [[  -z $Exp500 ]]; then\n")
 		#script.write(" exit 0 \n")
 		#script.write("fi \n")
+		#script.write("combine {prefix}_M{mass}_{ch}_combine_workspace.root -n M{mass}_{ch}_rscan_expectSUp95 -M MultiDimFit --algo grid --points 2000 --rMin -1 --rMax 100 -m {mass} --autoRange 1 --squareDistPoiStep -t -1 --fastScan  --expectSignal=$Exp500 \n\n".format(mass = mass, ch = channel, prefix=prefix))  ### r scan 
 		#script.write("combineTool.py -M Impacts --rMax 600 -m {mass} -n {prefix}_M{mass}_{ch}_impacts_S1 -d {prefix}_M{mass}_{ch}_combine_workspace.root --doInitialFit --cminDefaultMinimizerStrategy 0 --robustFit 1 --X-rtd MINIMIZER_analytic --expectSignal=$Exp500 -t -1 &> {prefix}_M{mass}_{ch}_impacts_{suffix}_step1.log\n".format(mass = mass, ch = channel,  suffix =scriptsuffix, prefix=prefix))
 		#script.write("combineTool.py -M Impacts --rMax 600 -m {mass} -n {prefix}_M{mass}_{ch}_impacts_S1 -d {prefix}_M{mass}_{ch}_combine_workspace.root --doFits --parallel 4 --cminDefaultMinimizerStrategy 0 --robustFit 1 --X-rtd MINIMIZER_analytic --expectSignal=$Exp500 -t -1 &> {prefix}_M{mass}_{ch}_impacts_{suffix}_step2.log\n".format(mass = mass, ch = channel,  suffix =scriptsuffix, prefix=prefix))
 		#script.write("combineTool.py -M Impacts --rMax 600 -m {mass} -n {prefix}_M{mass}_{ch}_impacts_S1 -d {prefix}_M{mass}_{ch}_combine_workspace.root -o {prefix}_M{mass}_{ch}_impacts_{suffix}.json --cminDefaultMinimizerStrategy 0 --robustFit 1 --X-rtd MINIMIZER_analytic --expectSignal=$Exp500 -t -1 &> {prefix}_M{mass}_{ch}_impacts_{suffix}_step3.log\n".format(mass = mass, ch = channel,  suffix =scriptsuffix, prefix=prefix))
+
 		#### Peter with no expected signal 
-		script.write("combineTool.py -M Impacts --rMax 100 -m {mass} -n {prefix}_M{mass}_{ch}_impacts_S0 -d {prefix}_M{mass}_{ch}_combine_workspace.root --doInitialFit --cminDefaultMinimizerStrategy 0 --robustFit 1 --X-rtd MINIMIZER_analytic -t -1 &> {prefix}_M{mass}_{ch}_impacts_{suffix}_step1.log\n".format(mass = mass, ch = channel,  suffix =scriptsuffix, prefix=prefix))
-		script.write("combineTool.py -M Impacts --rMax 100 -m {mass} -n {prefix}_M{mass}_{ch}_impacts_S0 -d {prefix}_M{mass}_{ch}_combine_workspace.root --doFits --parallel 4 --cminDefaultMinimizerStrategy 0 --robustFit 1 --X-rtd MINIMIZER_analytic -t -1 &> {prefix}_M{mass}_{ch}_impacts_{suffix}_step2.log\n".format(mass = mass, ch = channel,  suffix =scriptsuffix, prefix=prefix))
-		script.write("combineTool.py -M Impacts --rMax 100 -m {mass} -n {prefix}_M{mass}_{ch}_impacts_S0 -d {prefix}_M{mass}_{ch}_combine_workspace.root -o {prefix}_M{mass}_{ch}_impacts_{suffix}.json --cminDefaultMinimizerStrategy 0 --robustFit 1 --X-rtd MINIMIZER_analytic -t -1 &> {prefix}_M{mass}_{ch}_impacts_{suffix}_step3.log\n".format(mass = mass, ch = channel,  suffix =scriptsuffix, prefix=prefix))
+		#script.write("combine {prefix}_M{mass}_{ch}_combine_workspace.root -n M{mass}_{ch}_rscan_expectS0 -M MultiDimFit --algo grid --points 2000 --rMin -1 --rMax 100 -m {mass} --autoRange 1 --squareDistPoiStep -t -1 --fastScan  --expectSignal=0 \n\n".format(mass = mass, ch = channel, prefix=prefix))  ### r scan 
+
+		#script.write("combineTool.py -M Impacts --rMax 100 -m {mass} -n {prefix}_M{mass}_{ch}_impacts_S0 -d {prefix}_M{mass}_{ch}_combine_workspace.root --doInitialFit --cminDefaultMinimizerStrategy 0 --robustFit 1 --X-rtd MINIMIZER_analytic  --expectSignal=0 -t -1 &> {prefix}_M{mass}_{ch}_impacts_{suffix}_step1.log\n".format(mass = mass, ch = channel,  suffix =scriptsuffix, prefix=prefix))
+		#script.write("combineTool.py -M Impacts --rMax 100 -m {mass} -n {prefix}_M{mass}_{ch}_impacts_S0 -d {prefix}_M{mass}_{ch}_combine_workspace.root --doFits --parallel 4 --cminDefaultMinimizerStrategy 0 --robustFit 1 --X-rtd MINIMIZER_analytic  --expectSignal=0 -t -1 &> {prefix}_M{mass}_{ch}_impacts_{suffix}_step2.log\n".format(mass = mass, ch = channel,  suffix =scriptsuffix, prefix=prefix))
+		#script.write("combineTool.py -M Impacts --rMax 100 -m {mass} -n {prefix}_M{mass}_{ch}_impacts_S0 -d {prefix}_M{mass}_{ch}_combine_workspace.root -o {prefix}_M{mass}_{ch}_impacts_{suffix}.json --cminDefaultMinimizerStrategy 0 --robustFit 1 --X-rtd MINIMIZER_analytic  --expectSignal=0 -t -1 &> {prefix}_M{mass}_{ch}_impacts_{suffix}_step3.log\n".format(mass = mass, ch = channel,  suffix =scriptsuffix, prefix=prefix))
+
 		## rmax = 20
 		#script.write("combineTool.py -M Impacts -m {mass} -n {prefix}_M{mass}_{ch}_impacts -d {prefix}_M{mass}_{ch}_combine_workspace.root --doInitialFit -t -1 &> {prefix}_M{mass}_{ch}_impacts_{suffix}_step1.log\n".format(mass = mass, ch = channel,  suffix =scriptsuffix, prefix=prefix))
 		#script.write("combineTool.py -M Impacts -m {mass} -n {prefix}_M{mass}_{ch}_impacts -d {prefix}_M{mass}_{ch}_combine_workspace.root --rMax 20 --doFits --parallel 4 -t -1 &> {prefix}_M{mass}_{ch}_impacts_{suffix}_step2.log\n".format(mass = mass, ch = channel,  suffix =scriptsuffix, prefix=prefix))##too much printout
@@ -752,7 +761,7 @@ def getlimits_nncut1D(masslist, nnout, outdir_prefix):
     condordir = pwd+"/condor/"
     subcondorname = condordir + "submitall_limits1D.sh"
     subcondor = open(subcondorname, "a")
-    NoMjjbins = False
+    NoMjjbins =True
     #subcondor.write("#!/bin/bash \n")
     for nncut in NNcutlist:
 	#nncutsuffix = "nnstep0p04_nncut0p%s"%(str(nncut)[2:])
@@ -767,7 +776,7 @@ def getlimits_nncut1D(masslist, nnout, outdir_prefix):
 	workdir = pwd+outdir
 	print("nncutsuffix ", nncutsuffix, " outdir ", outdir)
 	#runCMSHIG17006Limits(masslist, workdir, True, True, nncutsuffix, outdir_prefix)
-        #runImpacts(masslist, workdir, outdir_prefix, True, False)
+        runImpacts(masslist, workdir, outdir_prefix, True, False)
 
         #for mass in masslist:
 	#    #Batch_GGToX0ToHHTo2B2L2NuMCstat_MjjMerged_nnout_MTonly_nnstep0p04_nncut0p0_limits_M900.cmd
@@ -784,10 +793,10 @@ def getlimits_nncut1D(masslist, nnout, outdir_prefix):
 	    #outdir = outdir_prefix+"_MjjMerged"+"_"+nnout+"_"+nncutsuffix+"_limits/"
 	    outdir = outdir_prefix+"_MjjcutSonly"+"_"+nnout+"_"+nncutsuffix+"_limits/"
 	#plotsuffix = nncutsuffix+"_NNonly_"+nnout+"_autoMCthresh0p0"
-	plotsuffix = nncutsuffix+"_NNvsHME_"+nnout+"_autoMCthresh10_bugfixed" ## for linearized2D
-	workdir = pwd+outdir
-	print("nncutsuffix ", nncutsuffix, " outdir ", outdir)
-        makeLimitsPlots(masslist, workdir, outdir_prefix, plotsuffix)
+	#plotsuffix = nncutsuffix+"_NNvsHME_"+nnout+"_autoMCthresh10_bugfixed" ## for linearized2D
+	#workdir = pwd+outdir
+	#print("nncutsuffix ", nncutsuffix, " outdir ", outdir)
+        #makeLimitsPlots(masslist, workdir, outdir_prefix, plotsuffix)
 
 def getlimits_nncut2D(masslist, nnout, outdir_prefix):
     ## 1. prepare data 
@@ -902,16 +911,17 @@ open(condordir+"submitall_limits1D.sh","write")
 #prefix = "GGToX0ToHHTo2B2L2Nu_NNvsHME_MCstat_MjjcutSonly"
 prefix = "GGToX0ToHHTo2B2L2Nu_NNvsHME_MCstat"
 getlimits_nncut1D(masslist, "nnout_MTonly", prefix)
-#getlimits_nncut1D(masslist, "nnout_MTandMT2", prefix)
-#getlimits_nncut1D(masslist, "nnout_MTandMT2_MJJ", prefix)
+getlimits_nncut1D(masslist, "nnout_MTandMT2", prefix)
+getlimits_nncut1D(masslist, "nnout_MTandMT2_MJJ", prefix)
 #getlimits_nncut1D(masslist, "nnout_MTandMT2_MJJ", "GGToX0ToHHTo2B2L2Nu_NoMjjbinsMjjcut")
 #getlimits_nncut1D(masslist, "nnout_MTandMT2_MJJ", "GGToX0ToHHTo2B2L2Nu_NoMjjbins")
 #getlimits_nncut1D([400, 750], "nnout_MTandMT2_HMEMJJ_dedicatedDNN", "GGToX0ToHHTo2B2L2Nu")
 #getlimits_nncut1D([400, 750], "nnout_MTandMT2_HME_dedicatedDNN", "GGToX0ToHHTo2B2L2Nu")
 ### HME, anti DNN cut
-#hmeprefix = "GGToX0ToHHTo2B2L2Nu_HME"
+hmeprefix = "GGToX0ToHHTo2B2L2Nu_HME"
 #getlimits_HME1D(masslist, "nnout_MTandMT2cut0p8",     hmeprefix)
 #getlimits_HME1D(masslist, "nnout_MTandMT2_MJJcut0p8", hmeprefix)
+#getlimits_HME1D(masslist, "nnout_MTandMT2_MJJcut0p95", hmeprefix)
 
 #open(condordir+"submitall_limits2D.sh","write")
 #getlimits_nncut2D(masslist, "nnout_MTonly", "GGToX0ToHHTo2B2L2Nu")
