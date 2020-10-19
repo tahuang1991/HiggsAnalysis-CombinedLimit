@@ -398,6 +398,7 @@ RooArgList * CMSHistErrorPropagator::setupBinPars(double poissonThreshold) {
             bintypes_[j][i] = 2;
           } else {
             RooRealVar *var = new RooRealVar(TString::Format("%s_bin%i_%s", this->GetName(), j, proc.c_str()), "", 0, -7, 7);
+            //RooRealVar *var = new RooRealVar(TString::Format("%s_bin%i_%s", this->GetName(), j, proc.c_str()), "", 0, 0, 7);
             std::cout << TString::Format(
                 "      => Parameter %s[%.2f,%.2f,%.2f] to be gaussian constrained\n",
                 var->GetName(), var->getVal(), var->getMin(), var->getMax());
@@ -407,7 +408,8 @@ RooArgList * CMSHistErrorPropagator::setupBinPars(double poissonThreshold) {
             bintypes_[j][i] = 3;
           }
         } else if (v_p >= 0 && e_p > v_p) {
-          RooRealVar *var = new RooRealVar(TString::Format("%s_bin%i_%s", this->GetName(), j, proc.c_str()), "", 0, -7, 7);
+          //RooRealVar *var = new RooRealVar(TString::Format("%s_bin%i_%s", this->GetName(), j, proc.c_str()), "", 0, -7, 7);
+          RooRealVar *var = new RooRealVar(TString::Format("%s_bin%i_%s", this->GetName(), j, proc.c_str()), "", 0, 0, 7);
           std::cout << TString::Format(
               "      => Poisson not viable, %s[%.2f,%.2f,%.2f] to be gaussian constrained\n",
               var->GetName(), var->getVal(), var->getMin(), var->getMax());
@@ -424,6 +426,7 @@ RooArgList * CMSHistErrorPropagator::setupBinPars(double poissonThreshold) {
     } else if (toterr_[j] > 0.) {
       bintypes_[j][0] = 1;
       RooRealVar *var = new RooRealVar(TString::Format("%s_bin%i", this->GetName(), j), "", 0, -7, 7);
+      //RooRealVar *var = new RooRealVar(TString::Format("%s_bin%i", this->GetName(), j), "", 0, 0.0, 7);
       std::cout << TString::Format(
           "  => Total parameter %s[%.2f,%.2f,%.2f] to be gaussian constrained\n",
           var->GetName(), var->getVal(), var->getMin(), var->getMax());
