@@ -1,0 +1,34 @@
+##datacard for GGToX0ToHHTo2B2L2Nu, Radion Model  Mass = 400 GeV, MuEl
+imax 1
+jmax 5
+kmax *
+#-----------------------------------------------------------------------------
+shapes * * GGToX0ToHHTo2B2L2Nu_NNvsHME_MCstat_M400_MuEl_autoMC.root $PROCESS $PROCESS_$SYSTEMATIC
+#-----------------------------------------------------------------------------
+bin		MuEl_M400
+observation		23110.0	
+#-----------------------------------------------------------------------------
+bin                                               MuEl_M400           MuEl_M400           MuEl_M400           MuEl_M400           MuEl_M400           MuEl_M400           
+process                                           TTbar               SingleTop           Drell_Yan           ttV                 VV                  Signal              
+process                                           1                   2                   3                   4                   5                   0                   
+rate                                              22618.792           637.834             158.812             61.790              5.660               0.770               
+#-----------------------------------------------------------------------------
+CMS_eff_b_heavy                         shape     1.0                 1.0                 1.0                 1.0                 1.0                 1.0                 
+CMS_eff_b_light                         shape     1.0                 1.0                 1.0                 1.0                 1.0                 1.0                 
+CMS_eff_e                               shape     1.0                 1.0                 1.0                 1.0                 1.0                 1.0                 
+CMS_eff_mu                              shape     1.0                 1.0                 1.0                 1.0                 1.0                 1.0                 
+CMS_eff_trigger_MuEl                    shape     1.0                 1.0                 1.0                 1.0                 1.0                 1.0                 
+CMS_iso_mu                              shape     1.0                 1.0                 1.0                 1.0                 1.0                 1.0                 
+CMS_pdf                                 shape     1.0                 1.0                 1.0                 1.0                 1.0                 1.0                 
+CMS_pu                                  shape     1.0                 1.0                 1.0                 1.0                 1.0                 1.0                 
+QCDscaleDrell_Yan                       shape     -                   -                   1.0                 -                   -                   -                   
+QCDscaleSignal                          shape     -                   -                   -                   -                   -                   1.0                 
+QCDscaleSingleTop                       shape     -                   1.0                 -                   -                   -                   -                   
+QCDscaleTTbar                           shape     1.0                 -                   -                   -                   -                   -                   
+QCDscaleVV                              shape     -                   -                   -                   -                   1.0                 -                   
+QCDscalettV                             shape     -                   -                   -                   1.0                 -                   -                   
+dy_mc_xsec                              lnN       -                   -                   1.050               -                   -                   -                   
+lumi_13TeV_2016                         lnN       1.025               1.025               1.025               1.025               1.025               1.025               
+singleTop_xsec                          lnN       -                   1.072               -                   -                   -                   -                   
+ttbar_xsec                              lnN       1.053               -                   -                   -                   -                   -                   
+* autoMCStats 0.0 

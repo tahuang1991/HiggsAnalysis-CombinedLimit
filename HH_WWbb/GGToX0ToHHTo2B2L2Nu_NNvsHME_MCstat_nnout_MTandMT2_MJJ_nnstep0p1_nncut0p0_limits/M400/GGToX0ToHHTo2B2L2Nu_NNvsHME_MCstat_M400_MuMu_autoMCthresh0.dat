@@ -1,0 +1,32 @@
+##datacard for GGToX0ToHHTo2B2L2Nu, Radion Model  Mass = 400 GeV, MuMu
+imax 1
+jmax 7
+kmax *
+#-----------------------------------------------------------------------------
+shapes * * GGToX0ToHHTo2B2L2Nu_NNvsHME_MCstat_M400_MuMu_autoMC.root $PROCESS $PROCESS_$SYSTEMATIC
+#-----------------------------------------------------------------------------
+bin		MuMu_M400
+observation		21236.0	
+#-----------------------------------------------------------------------------
+bin                                               MuMu_M400           MuMu_M400           MuMu_M400           MuMu_M400           MuMu_M400           MuMu_M400           MuMu_M400           MuMu_M400           
+process                                           TTbar               SingleTop           data_untagged       TTbar_untagged      SingleTop_untagged  ttV                 VV                  Signal              
+process                                           1                   2                   3                   4                   5                   6                   7                   0                   
+rate                                              19093.694           543.817             3320.469            528.686             32.154              76.168              35.979              0.677               
+#-----------------------------------------------------------------------------
+CMS_eff_b_heavy                         shape     1.0                 1.0                 -                   1.0                 1.0                 1.0                 1.0                 1.0                 
+CMS_eff_b_light                         shape     1.0                 1.0                 -                   1.0                 1.0                 1.0                 1.0                 1.0                 
+CMS_eff_mu                              shape     1.0                 1.0                 -                   1.0                 1.0                 1.0                 1.0                 1.0                 
+CMS_eff_trigger_MuMu                    shape     1.0                 1.0                 -                   1.0                 1.0                 1.0                 1.0                 1.0                 
+CMS_iso_mu                              shape     1.0                 1.0                 -                   1.0                 1.0                 1.0                 1.0                 1.0                 
+CMS_pdf                                 shape     1.0                 1.0                 -                   1.0                 1.0                 1.0                 1.0                 1.0                 
+CMS_pu                                  shape     1.0                 1.0                 -                   1.0                 1.0                 1.0                 1.0                 1.0                 
+QCDscaleSignal                          shape     -                   -                   -                   -                   -                   -                   -                   1.0                 
+QCDscaleSingleTop                       shape     -                   1.0                 -                   -                   1.0                 -                   -                   -                   
+QCDscaleTTbar                           shape     1.0                 -                   -                   1.0                 -                   -                   -                   -                   
+QCDscaleVV                              shape     -                   -                   -                   -                   -                   -                   1.0                 -                   
+QCDscalettV                             shape     -                   -                   -                   -                   -                   1.0                 -                   -                   
+dy_rwgt_norm_MuMu                       lnN       -                   -                   1.050               1.050               1.050               -                   -                   -                   
+lumi_13TeV_2016                         lnN       1.025               1.025               -                   1.025               1.025               1.025               1.025               1.025               
+singleTop_xsec                          lnN       -                   1.072               -                   -                   1.072               -                   -                   -                   
+ttbar_xsec                              lnN       1.053               -                   -                   1.053               -                   -                   -                   -                   
+* autoMCStats 0.0 
